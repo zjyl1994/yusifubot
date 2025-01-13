@@ -9,6 +9,8 @@ import (
 	"github.com/zjyl1994/yusifubot/infra/vars"
 )
 
+var stopCh = make(chan struct{})
+
 func Start() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -17,32 +19,40 @@ func Start() {
 
 	logrus.Infoln("Bot started")
 
-	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-
-		if !update.Message.IsCommand() {
-			continue
-		}
-
-		if update.Message.From.IsBot {
-			continue
-		}
-
-		err := commandDispatcher(update.Message)
-		if err != nil {
-			errMsg := "发生错误，请联系管理员"
-			if bizErr, ok := err.(utils.BizErr); ok {
-				errMsg = bizErr.GetBizMsg()
-			} else {
-				logrus.Errorln(err)
+	for {
+		select {
+		case update := <-updates:
+			if update.Message == nil {
+				continue
 			}
-			utils.ReplyTextToTelegram(update.Message, errMsg, false)
+
+			if !update.Message.IsCommand() {
+				continue
+			}
+
+			if update.Message.From.IsBot {
+				continue
+			}
+
+			err := commandDispatcher(update.Message)
+			if err != nil {
+				errMsg := "发生错误，请联系管理员"
+				if bizErr, ok := err.(utils.BizErr); ok {
+					errMsg = bizErr.GetBizMsg()
+				} else {
+					logrus.Errorln(err)
+				}
+				utils.ReplyTextToTelegram(update.Message, errMsg, false)
+			}
+		case <-stopCh:
+			return
 		}
 	}
 }
 
+func Stop() {
+	close(stopCh)
+}
 func commandDispatcher(msg *tgbotapi.Message) error {
 	command := msg.Command()
 	args := strings.Fields(msg.CommandArguments())
