@@ -59,13 +59,16 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 	args := strings.Fields(msg.CommandArguments())
 	logrus.Debugln("Received", command, args)
 
-	// TODO: 在此分发命令
+	// catch开头的命令逻辑复杂需要单独分发逻辑处理
 	if strings.HasPrefix(command, "catch") {
 		return catch.CatchDispatcher(msg)
 	}
+	// 在此分发其他命令
 	switch command {
 	case "debug":
 		return handleDebugInfo(msg)
+	case "mycatch":
+		return catch.MyCatch(msg)
 	default:
 		return utils.ReplyTextToTelegram(msg, "未知命令", false)
 	}

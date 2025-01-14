@@ -34,8 +34,8 @@ func (s *Stamina) String() string {
 	current := s.Current()
 	remainSec := s.RemainSecond()
 	if remainSec > 0 {
-		return fmt.Sprintf("当前SP剩余%d,距离恢复下一点还有%d秒。", current, remainSec)
+		return fmt.Sprintf("当前体力剩余%d,距离恢复下一点还有%d秒。", current, remainSec)
 	} else {
-		return fmt.Sprintf("当前SP剩余%d,已达到自然恢复上限。", current)
+		return fmt.Sprintf("当前体力剩余%d,已达到自然恢复上限。", current)
 	}
 }
