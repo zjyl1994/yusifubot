@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
+	"github.com/zjyl1994/yusifubot/service/catchgame/catch"
 )
 
 var stopCh = make(chan struct{})
@@ -59,6 +60,9 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 	logrus.Debugln("Received", command, args)
 
 	// TODO: 在此分发命令
+	if strings.HasPrefix(command, "catch") {
+		return catch.CatchDispatcher(msg)
+	}
 
 	return utils.ReplyTextToTelegram(msg, "未知命令", false)
 }
