@@ -2,7 +2,6 @@ package stamina
 
 import (
 	"errors"
-	"strconv"
 
 	"github.com/zjyl1994/yusifubot/infra/utils/kmutex"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
@@ -14,10 +13,6 @@ const (
 )
 
 var (
-	spLock       = kmutex.NewKmutex(userRelHasher, 0) //体力锁
+	spLock       = kmutex.NewKmutex(common.UserRelHasher, 100) //体力锁
 	ErrNotEnough = errors.New("体力不足")
 )
-
-func userRelHasher(rel common.UserRel) uint64 {
-	return kmutex.StringHasher(strconv.FormatInt(rel.ChatId, 10) + "_" + strconv.FormatInt(rel.UserId, 10))
-}

@@ -11,7 +11,7 @@ import (
 var app *fiber.App
 
 func Start() {
-	app = fiber.New()
+	app = fiber.New(fiber.Config{DisableStartupMessage: true})
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Hello, World 👋!")
 	})
