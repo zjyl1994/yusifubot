@@ -4,12 +4,16 @@ import (
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/vinta/pangu"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 )
 
 const PARSE_MODE_MARKDOWN = "MarkdownV2"
 
 func ReplyTextToTelegram(input *tgbotapi.Message, text string, markdown bool) error {
+	if !markdown {
+		text = pangu.SpacingText(text)
+	}
 	msg := tgbotapi.NewMessage(input.Chat.ID, text)
 	msg.ReplyToMessageID = input.MessageID
 	if markdown {

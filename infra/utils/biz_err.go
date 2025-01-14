@@ -11,7 +11,14 @@ type bizErr struct {
 	base    error
 }
 
-func NewBizErr(msg string, base error) bizErr {
+func NewBizErr(msg string) bizErr {
+	return bizErr{
+		message: msg,
+		base:    errors.New(msg),
+	}
+}
+
+func NewBizErrWithBase(msg string, base error) bizErr {
 	return bizErr{
 		message: msg,
 		base:    base,

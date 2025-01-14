@@ -40,7 +40,7 @@ func UseStaminPoint(user common.UserRel, cost int64) (*Stamina, error) {
 	remainEnergy := current - cost
 	// 检查是否扣完
 	if remainEnergy < 0 {
-		return sp, utils.NewBizErr(fmt.Sprintf("SP不足%d,%s", cost, sp.String()), ErrNotEnough)
+		return sp, utils.NewBizErrWithBase(fmt.Sprintf("SP不足%d,%s", cost, sp.String()), ErrNotEnough)
 	}
 	// 新体力写入DB
 	sp.LastSP = remainEnergy

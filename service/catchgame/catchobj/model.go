@@ -18,7 +18,7 @@ type CatchObj struct {
 	CatchHitSticker  utils.Array[string] // 捕捉成功贴图
 }
 
-func (obj CatchObj) GetMissingText() string {
+func (obj CatchObj) GetMissText() string {
 	return utils.PickOne(obj.CatchMissText)
 }
 
