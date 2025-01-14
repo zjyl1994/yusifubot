@@ -8,25 +8,25 @@ import (
 )
 
 func GetCatchObj(id int64) (*CatchObj, error) {
-	var obj *CatchObj
-	err := vars.DBInstance.First(obj, id).Error
+	var obj CatchObj
+	err := vars.DBInstance.First(&obj, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return obj, nil
+	return &obj, nil
 }
 
 func GetCatchObjByShorthand(sh string) (*CatchObj, error) {
-	var obj *CatchObj
-	err := vars.DBInstance.Where("shorthand =?", sh).First(obj).Error
+	var obj CatchObj
+	err := vars.DBInstance.Where("shorthand =?", sh).First(&obj).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	return obj, nil
+	return &obj, nil
 }

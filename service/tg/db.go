@@ -15,14 +15,14 @@ func UpdateUserName(tgUserId int64, tgUserName string) error {
 	m.UserName = tgUserName
 
 	return vars.DBInstance.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "tg_user_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"tg_user_name"}),
+		Columns:   []clause.Column{{Name: "user_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"user_name"}),
 	}).Create(&m).Error
 }
 
 func GetUserName(tgUserId int64) (string, error) {
 	var m User
-	err := vars.DBInstance.Where("tg_user_id = ?", tgUserId).First(&m).Error
+	err := vars.DBInstance.Where("user_id = ?", tgUserId).First(&m).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return "USER" + strconv.FormatInt(tgUserId, 10), nil
@@ -38,14 +38,14 @@ func UpdateChatName(tgChatId int64, tgChatName string) error {
 	m.ChatName = tgChatName
 
 	return vars.DBInstance.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "tg_chat_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"tg_chat_name"}),
+		Columns:   []clause.Column{{Name: "chat_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"chat_name"}),
 	}).Create(&m).Error
 }
 
 func GetChatName(tgChatId int64) (string, error) {
 	var m User
-	err := vars.DBInstance.Where("tg_chat_id = ?", tgChatId).First(&m).Error
+	err := vars.DBInstance.Where("chat_id = ?", tgChatId).First(&m).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return "CHAT" + strconv.FormatInt(tgChatId, 10), nil

@@ -6,16 +6,16 @@ import (
 
 type CatchObj struct {
 	ID               int64               `gorm:"primaryKey"`
-	ChatId           int64               `gorm:"uniqueIndex:idx_chat_short,column:chat_id"`
-	Shorthand        string              `gorm:"uniqueIndex:idx_chat_short,column:shorthand"` // 缩写
+	ChatId           int64               `gorm:"uniqueIndex:idx_chat_short;column:chat_id"`
+	Shorthand        string              `gorm:"uniqueIndex:idx_chat_short;column:shorthand"` // 缩写
 	Name             string              // 捕捉的人
 	Emoji            string              // 缩写的emoji
 	Stamina          int64               // 捕捉消耗的体力
 	CatchRate        float64             // 爆率
-	CatchMissText    utils.Array[string] // 捕捉失败提示语
-	CatchMissSticker utils.Array[string] // 捕捉失败贴图
-	CatchHitText     utils.Array[string] // 捕捉成功提示语
-	CatchHitSticker  utils.Array[string] // 捕捉成功贴图
+	CatchMissText    utils.Array[string] `gorm:"type:TEXT;serializer:json"` // 捕捉失败提示语
+	CatchMissSticker utils.Array[string] `gorm:"type:TEXT;serializer:json"` // 捕捉失败贴图
+	CatchHitText     utils.Array[string] `gorm:"type:TEXT;serializer:json"` // 捕捉成功提示语
+	CatchHitSticker  utils.Array[string] `gorm:"type:TEXT;serializer:json"` // 捕捉成功贴图
 }
 
 func (obj CatchObj) GetMissText() string {

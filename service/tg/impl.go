@@ -8,17 +8,24 @@ import (
 
 func UpdateChatAndUserName(msg *tgbotapi.Message) error {
 	userId := msg.From.ID
-	username := strings.TrimSpace(msg.From.FirstName + " " + msg.From.LastName)
+	username := GetTgUserName(msg.From)
 	if err := UpdateUserName(userId, username); err != nil {
 		return err
 	}
 
 	chatId := msg.Chat.ID
-	var chatName string
-	if msg.Chat.Type == "private" {
-		chatName = strings.TrimSpace(msg.Chat.FirstName + " " + msg.Chat.LastName)
-	} else {
-		chatName = msg.Chat.Title
-	}
+	chatName := GetTgChatName(msg.Chat)
 	return UpdateChatName(chatId, chatName)
+}
+
+func GetTgUserName(msg *tgbotapi.User) string {
+	return strings.TrimSpace(msg.FirstName + " " + msg.LastName)
+}
+
+func GetTgChatName(msg *tgbotapi.Chat) string {
+	if msg.Type == "private" {
+		return strings.TrimSpace(msg.FirstName + " " + msg.LastName)
+	} else {
+		return msg.Title
+	}
 }

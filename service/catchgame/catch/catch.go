@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
@@ -20,9 +21,10 @@ func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) e
 	if err != nil {
 		return err
 	}
-	if cobj == nil || cobj.ChatId != msg.Chat.ID || cobj.Stamina == 0 {
-		return utils.NewBizErr("不支持的捕捉对象")
+	if cobj == nil || (cobj.ChatId != 0 && cobj.ChatId != msg.Chat.ID) || cobj.Stamina == 0 {
+		return utils.NewBizErr("尚未开放" + catchTarget + "的捕捉")
 	}
+	logrus.Debugln(cobj)
 	// 计算真实抓数
 	user := common.UserRel{
 		ChatId: msg.Chat.ID,
@@ -82,7 +84,7 @@ func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) e
 		}
 	}
 	// 多抽模式
-	catchSuccessRate := strconv.FormatFloat(float64(catchAmount)/float64(realCatchNum)*100, 'f', 2, 64) + "%"
+	catchSuccessRate := strconv.FormatFloat(float64(catchAmount)/float64(realCatchNum)*100, 'f', 2, 64)
 	var sb strings.Builder
 	sb.WriteString("捕捉结果：")
 	for _, v := range catchResult {

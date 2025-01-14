@@ -63,6 +63,10 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 	if strings.HasPrefix(command, "catch") {
 		return catch.CatchDispatcher(msg)
 	}
-
-	return utils.ReplyTextToTelegram(msg, "未知命令", false)
+	switch command {
+	case "debug":
+		return handleDebugInfo(msg)
+	default:
+		return utils.ReplyTextToTelegram(msg, "未知命令", false)
+	}
 }

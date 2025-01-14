@@ -1,8 +1,10 @@
 package catch
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
+	"unicode"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/zjyl1994/yusifubot/infra/utils"
@@ -14,22 +16,25 @@ var catchCommandRegexp = regexp.MustCompile(`(?i)^catch([a-zA-Z]+?)(\d+|all)?$`)
 // 所有catch开头命令由此分发
 func CatchDispatcher(msg *tgbotapi.Message) error {
 	command := msg.Command()
-	args := strings.Fields(msg.CommandArguments())
+	args := msg.CommandArguments()
 
 	err := tg.UpdateChatAndUserName(msg)
 	if err != nil {
 		return err
 	}
-	// 单纯的捕捉指令，结构化响应
+	// 单纯的捕捉指令，合并成组合指令走正则解析
 	if command == "catch" {
-		switch len(args) {
-		case 0:
-			return utils.ReplyTextToTelegram(msg, "需要指定捕捉对象", false)
-		case 1:
-			return CatchAction(msg, args[0], catchNum("1"))
-		default:
-			return CatchAction(msg, args[0], catchNum(args[1]))
+		if len(args) == 0 {
+			return utils.ReplyTextToTelegram(msg, "👀 你要捉谁？", false)
 		}
+		var builder strings.Builder
+		builder.WriteString(command)
+		for _, r := range args {
+			if !unicode.IsSpace(r) {
+				builder.WriteRune(r)
+			}
+		}
+		command = builder.String()
 	}
 	// 组合指令，尝试使用正则解析
 	if matches := catchCommandRegexp.FindStringSubmatch(command); matches != nil {
@@ -44,5 +49,5 @@ func CatchDispatcher(msg *tgbotapi.Message) error {
 
 		return CatchAction(msg, catchName, num)
 	}
-	return utils.ReplyTextToTelegram(msg, "无法解析命令"+command, false)
+	return utils.ReplyTextToTelegram(msg, fmt.Sprintf("无法解析：%s %s", command, args), false)
 }

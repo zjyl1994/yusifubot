@@ -2,9 +2,9 @@ package catchret
 
 type CatchRet struct {
 	ID        int64 `gorm:"primaryKey"`
-	ChatId    int64 `gorm:"uniqueIndex:idx_chat_user_obj,column:chat_id"`
-	UserId    int64 `gorm:"uniqueIndex:idx_chat_user_obj,column:user_id"`
-	ObjId     int64 `gorm:"uniqueIndex:idx_chat_user_obj,column:obj_id"`
+	ChatId    int64 `gorm:"uniqueIndex:idx_chat_user_obj;column:chat_id"`
+	UserId    int64 `gorm:"uniqueIndex:idx_chat_user_obj;column:user_id"`
+	ObjId     int64 `gorm:"uniqueIndex:idx_chat_user_obj;column:obj_id"`
 	Amount    int64 // 捕捉数量
 	LastCatch int64 // 最后捕捉时间戳
 }
