@@ -64,11 +64,13 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 		return catch.CatchDispatcher(msg)
 	}
 	// 在此分发其他命令
-	switch command {
+	switch strings.ToLower(command) {
 	case "debug":
 		return handleDebugInfo(msg)
 	case "mycatch":
 		return catch.MyCatch(msg)
+	case "rankcatch":
+		return catch.CatchRank(msg)
 	default:
 		return utils.ReplyTextToTelegram(msg, "未知命令", false)
 	}
