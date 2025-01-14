@@ -1,8 +1,9 @@
 package catch
 
 import (
-	"fmt"
 	"math/rand/v2"
+	"strconv"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/zjyl1994/yusifubot/infra/utils"
@@ -81,6 +82,23 @@ func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) e
 		}
 	}
 	// 多抽模式
-
-	return utils.ReplyTextToTelegram(msg, fmt.Sprintf("TARGET %s ALL %t NUM %d", catchTarget, catchNum.IsAll(), catchNum.GetNum()), false)
+	catchSuccessRate := strconv.FormatFloat(float64(catchAmount)/float64(realCatchNum)*100, 'f', 2, 64) + "%"
+	var sb strings.Builder
+	sb.WriteString("捕捉结果：")
+	for _, v := range catchResult {
+		if v {
+			if cobj.Emoji != "" {
+				sb.WriteString(cobj.Emoji)
+			} else {
+				sb.WriteString(CATCH_DEFAULT_EMOJI)
+			}
+		} else {
+			sb.WriteString(CATCH_MISS_EMOJI)
+		}
+	}
+	sb.WriteRune('\n')
+	sb.WriteString("本次成功率：")
+	sb.WriteString(catchSuccessRate)
+	sb.WriteString("%")
+	return utils.ReplyTextToTelegram(msg, sb.String(), false)
 }
