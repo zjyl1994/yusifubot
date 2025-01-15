@@ -74,10 +74,6 @@ func Start() (err error) {
 	<-signalChan
 	logrus.Infoln("Received interrupt, shutting down...")
 
-	bot.Stop()
-	if err = http.Stop(); err != nil {
-		return err
-	}
 	if err = sqlDB.Close(); err != nil {
 		return err
 	}

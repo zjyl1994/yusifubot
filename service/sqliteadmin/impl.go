@@ -19,6 +19,7 @@ func NewSQLiteAdmin(db *gorm.DB) *sqliteAdmin {
 
 func (s *sqliteAdmin) Register(r fiber.Router) {
 	r.Get("/tables", s.handleTables)
+	r.Get("/data", s.handleGetData)
 	r.Post("/run", s.handleRun)
 }
 
@@ -70,5 +71,53 @@ func (s *sqliteAdmin) handleTables(c *fiber.Ctx) error {
 		ret["tables"] = countMap
 	}
 	ret["time"] = time.Since(start).String()
+	return c.JSON(ret)
+}
+
+func (s *sqliteAdmin) handleGetData(c *fiber.Ctx) error {
+	page := c.QueryInt("page")
+	if page <= 0 {
+		page = 1
+	}
+	pageSize := c.QueryInt("size")
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	tableName := c.Query("table")
+	if tableName == "" {
+		return fiber.ErrBadRequest
+	}
+	offset := (page - 1) * pageSize
+	orderBy := c.Query("order")
+
+	start := time.Now()
+	var count int64
+	err := s.db.Table(tableName).Count(&count).Error
+	timeUsed := time.Since(start)
+	ret := fiber.Map{"time": timeUsed.String()}
+	if err != nil {
+		ret["error"] = err.Error()
+		return c.JSON(ret)
+	}
+	ret["page"] = fiber.Map{
+		"page": page,
+		"size": pageSize,
+		"rows": count,
+	}
+
+	data := make([]map[string]any, 0)
+	query := s.db.Table(tableName)
+	if orderBy != "" {
+		query = query.Order(orderBy)
+	}
+	err = query.Limit(pageSize).Offset(offset).Find(&data).Error
+	timeUsed = time.Since(start)
+	ret["time"] = timeUsed.String()
+	if err != nil {
+		ret["error"] = err.Error()
+		return c.JSON(ret)
+	}
+
+	ret["data"] = data
 	return c.JSON(ret)
 }

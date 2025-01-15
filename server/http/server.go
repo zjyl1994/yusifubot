@@ -1,8 +1,6 @@
 package http
 
 import (
-	"time"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/vars"
@@ -24,11 +22,4 @@ func Start() {
 	if err != nil {
 		logrus.Errorln("Http server error", err.Error())
 	}
-}
-
-func Stop() error {
-	if app != nil {
-		return app.ShutdownWithTimeout(3 * time.Second)
-	}
-	return nil
 }
