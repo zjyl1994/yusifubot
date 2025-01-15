@@ -21,7 +21,7 @@ func AddCatchResult(user common.UserRel, objId, amount int64) (int64, error) {
 			UserId: user.UserId,
 			ObjId:  objId,
 		}
-		err := tx.FirstOrCreate(&ret).Error
+		err := tx.Where("chat_id = ? AND user_id = ? AND obj_id = ?", user.ChatId, user.UserId, objId).FirstOrCreate(&ret).Error
 		if err != nil {
 			return err
 		}
