@@ -39,39 +39,24 @@ func (s *sqliteAdmin) handleRun(c *fiber.Ctx) error {
 
 	retMap := fiber.Map{"time": timeUsed.String()}
 	if result.Error != nil {
-		retMap["error"] = result.Error.Error()
+		retMap["data"] = []map[string]any{{"ERROR": result.Error.Error()}}
 		return c.JSON(retMap)
 	}
-	if useQuery {
-		retMap["data"] = data
+	if !useQuery {
+		retMap["data"] = []map[string]any{{"ROWS_AFFECTED": result.RowsAffected}}
 	} else {
-		retMap["rows_affected"] = result.RowsAffected
+		retMap["data"] = data
 	}
 	return c.JSON(retMap)
 }
 
 func (s *sqliteAdmin) handleTables(c *fiber.Ctx) error {
-	start := time.Now()
 	var tableNames []string
 	err := s.db.Raw("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name;").Scan(&tableNames).Error
 	if err != nil {
 		return err
 	}
-	ret := fiber.Map{"tables": tableNames}
-	if c.QueryBool("count") {
-		countMap := make(map[string]int64)
-		for _, tableName := range tableNames {
-			var count int64
-			err = s.db.Raw("SELECT COUNT(*) FROM " + tableName).Scan(&count).Error
-			if err != nil {
-				return err
-			}
-			countMap[tableName] = count
-		}
-		ret["tables"] = countMap
-	}
-	ret["time"] = time.Since(start).String()
-	return c.JSON(ret)
+	return c.JSON(fiber.Map{"tables": tableNames})
 }
 
 func (s *sqliteAdmin) handleGetData(c *fiber.Ctx) error {
@@ -96,13 +81,8 @@ func (s *sqliteAdmin) handleGetData(c *fiber.Ctx) error {
 	timeUsed := time.Since(start)
 	ret := fiber.Map{"time": timeUsed.String()}
 	if err != nil {
-		ret["error"] = err.Error()
+		ret["data"] = []map[string]any{{"ERROR": err.Error()}}
 		return c.JSON(ret)
-	}
-	ret["page"] = fiber.Map{
-		"page": page,
-		"size": pageSize,
-		"rows": count,
 	}
 
 	data := make([]map[string]any, 0)
@@ -114,10 +94,16 @@ func (s *sqliteAdmin) handleGetData(c *fiber.Ctx) error {
 	timeUsed = time.Since(start)
 	ret["time"] = timeUsed.String()
 	if err != nil {
-		ret["error"] = err.Error()
+		ret["data"] = []map[string]any{{"ERROR": err.Error()}}
 		return c.JSON(ret)
 	}
 
 	ret["data"] = data
+
+	ret["page"] = fiber.Map{
+		"page": page,
+		"size": pageSize,
+		"rows": count,
+	}
 	return c.JSON(ret)
 }

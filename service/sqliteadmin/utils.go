@@ -8,5 +8,8 @@ func useQuery(sql string) bool {
 		return false
 	}
 	firstBlock := strings.ToLower(sqlFields[0])
-	return firstBlock == "select"
+	return firstBlock == "select" ||
+		firstBlock == "with" ||
+		firstBlock == "pragma" ||
+		firstBlock == "explain"
 }
