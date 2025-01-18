@@ -10,6 +10,12 @@
 
 <body>
     <main class="container">
+        <h1>CatchGame Dashboard</h1>
+        <div style="display: flex;justify-content: space-between;">
+            <span>Powered by Yusifubot</span>
+            <span><a href="/catchgame/stat">JSON 格式数据</a></span>
+        </div>
+        <hr>
         {{range $name, $tableData := .stat}}
         <h2>{{$name}}</h2>
         <table>
