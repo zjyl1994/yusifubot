@@ -14,4 +14,7 @@ var (
 
 	DatabasePath string
 	DBInstance   *gorm.DB
+
+	AdminUser string
+	AdminPass string
 )

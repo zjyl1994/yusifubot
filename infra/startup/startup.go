@@ -37,6 +37,9 @@ func Start() (err error) {
 	if vars.BotToken == "" {
 		return errors.New("YUSIFUBOT_BOT_TOKEN is not set")
 	}
+
+	vars.AdminUser = os.Getenv("YUSIFUBOT_ADMIN_USER")
+	vars.AdminPass = os.Getenv("YUSIFUBOT_ADMIN_PASS")
 	// 初始化数据库
 	vars.DBInstance, err = gorm.Open(sqlite.Open(vars.DatabasePath), &gorm.Config{
 		Logger: gorm_logrus.New(),
