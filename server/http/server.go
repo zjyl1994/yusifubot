@@ -17,6 +17,8 @@ import (
 var app *fiber.App
 
 func Start() {
+	var catchGameHandler catchGameHandler
+
 	app = fiber.New(fiber.Config{DisableStartupMessage: true})
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.Redirect("/catchgame")
@@ -55,10 +57,10 @@ func Start() {
 		rateLimiter := limiter.New(limiterCfg)
 
 		adminG := app.Group("/admin", rateLimiter, authWare)
+		adminG.Post("/addsp", catchGameHandler.AddStaminPoint) // 增加体力API
 		adminG.Post("/ntunnel", adaptor.HTTPHandler(tun))
 	}
 
-	var catchGameHandler catchGameHandler
 	catchG := app.Group("/catchgame")
 	catchG.Get("/", catchGameHandler.Index)
 
