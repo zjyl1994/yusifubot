@@ -10,9 +10,9 @@ var app *fiber.App
 
 func Start() {
 	app = fiber.New(fiber.Config{DisableStartupMessage: true})
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World 👋!")
-	})
+	app.Get("/", handleIndexPage)
+	app.Get("/ntunnel", ntunnelPage)
+	app.Post("/ntunnel", ntunnelGen())
 
 	err := app.Listen(vars.ListenAddr)
 	if err != nil {
