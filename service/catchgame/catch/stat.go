@@ -6,6 +6,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/zjyl1994/yusifubot/infra/utils"
+	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
@@ -86,4 +87,22 @@ func CatchRank(msg *tgbotapi.Message) error {
 		}
 	}
 	return utils.ReplyTextToTelegram(msg, sb.String(), true)
+}
+
+func runStatSQL(sql string) ([]map[string]any, error) {
+	var result []map[string]any
+	err := vars.DBInstance.Raw(sql).Find(&result).Error
+	return result, err
+}
+
+func Stat() (map[string][]map[string]any, error) {
+	result := make(map[string][]map[string]any)
+	for k, v := range statSQLMap {
+		r, err := runStatSQL(v)
+		if err != nil {
+			return nil, err
+		}
+		result[k] = r
+	}
+	return result, nil
 }

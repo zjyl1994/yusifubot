@@ -4,17 +4,45 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/zjyl1994/yusifubot/service/catchgame/catch"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
+	"golang.org/x/sync/singleflight"
 )
 
-type catchGameHandler struct{}
-
-func (catchGameHandler) Index(c *fiber.Ctx) error {
-	return c.SendString("index page")
+type catchGameHandler struct {
+	statSf singleflight.Group
 }
 
-func (catchGameHandler) AddStaminPoint(c *fiber.Ctx) error {
+func (h *catchGameHandler) Index(c *fiber.Ctx) error {
+	result, err := h.getStatData()
+	if err != nil {
+		return err
+	}
+
+	return c.Render("templates/catchgame_dashboard", fiber.Map{
+		"stat": result,
+	})
+}
+
+func (h *catchGameHandler) getStatData() (map[string][]map[string]any, error) {
+	result, err, _ := h.statSf.Do("stat", func() (any, error) {
+		return catch.Stat()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(map[string][]map[string]any), nil
+}
+
+func (h *catchGameHandler) Stat(c *fiber.Ctx) error {
+	result, err := h.getStatData()
+	if err != nil {
+		return err
+	}
+	return c.JSON(result)
+}
+func (h *catchGameHandler) AddStaminPoint(c *fiber.Ctx) error {
 	userId, err := strconv.ParseInt(c.FormValue("user"), 10, 64)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).SendString("user:" + err.Error())

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CatchGame Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.indigo.min.css">
+</head>
+
+<body>
+    <main class="container">
+        {{range $name, $tableData := .stat}}
+        <h2>{{$name}}</h2>
+        <table>
+            <thead>
+                <tr>
+                    {{- if $tableData }}
+                    {{- range $key, $value := (index $tableData 0) }}
+                    <th>{{ $key }}</th>
+                    {{- end }}
+                    {{- end }}
+                </tr>
+            </thead>
+            <tbody>
+                {{- range $tableData }}
+                <tr>
+                    {{- range $value := . }}
+                    <td>{{ $value }}</td>
+                    {{- end }}
+                </tr>
+                {{- end }}
+            </tbody>
+        </table>
+        {{end}}
+    </main>
+</body>
+
+</html>
