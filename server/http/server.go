@@ -8,10 +8,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
-	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/template/html/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/vars"
+	"github.com/zjyl1994/yusifubot/service/configure"
 	"github.com/zjyl1994/yusifubot/service/ntunnel"
 
 	sqlite3 "modernc.org/sqlite/lib"
@@ -32,7 +32,7 @@ func Start() {
 		Views:                 engine,
 	})
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("It works!")
+		return c.SendString("This is Yusifubot!\nIt works!")
 	})
 
 	if vars.AdminUser != "" && vars.AdminPass != "" {
@@ -54,18 +54,9 @@ func Start() {
 			vars.AdminUser: vars.AdminPass,
 		}
 		authWare := basicauth.New(authCfg)
-		// 登录限流
-		limiterCfg := limiter.ConfigDefault
-		limiterCfg.Max = 30
-		limiterCfg.KeyGenerator = func(c *fiber.Ctx) string {
-			if val := c.Get("X-Real-Ip"); val != "" {
-				return val
-			}
-			return c.IP()
-		}
-		rateLimiter := limiter.New(limiterCfg)
 		// 路由组
-		adminG := app.Group("/admin", rateLimiter, authWare)
+		adminG := app.Group("/admin", authWare)
+		adminG.Post("/setmaintenance", setMaintenanceHandler)  // 设置维护状态API
 		adminG.Post("/addsp", catchGameHandler.AddStaminPoint) // 增加体力API
 		adminG.Post("/ntunnel", adaptor.HTTPHandler(tun))      // 远程DB隧道
 	}
@@ -78,4 +69,16 @@ func Start() {
 	if err != nil {
 		logrus.Errorln("Http server error", err.Error())
 	}
+}
+
+func setMaintenanceHandler(c *fiber.Ctx) error {
+	val := c.FormValue("switch")
+	if val != "on" && val != "off" {
+		return c.Status(fiber.StatusBadRequest).SendString("Invalid switch value")
+	}
+	err := configure.Set("maintenance", val)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+	return c.SendString("OK")
 }

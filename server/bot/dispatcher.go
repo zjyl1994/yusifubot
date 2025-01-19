@@ -8,6 +8,7 @@ import (
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catch"
+	"github.com/zjyl1994/yusifubot/service/configure"
 )
 
 func Start() {
@@ -28,6 +29,11 @@ func Start() {
 		}
 
 		if update.Message.From.IsBot {
+			continue
+		}
+
+		if checkMaintenance() {
+			utils.ReplyTextToTelegram(update.Message, "Bot维护中，暂时无法使用", false)
 			continue
 		}
 
@@ -64,4 +70,12 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 	default:
 		return utils.ReplyTextToTelegram(msg, "未知命令", false)
 	}
+}
+
+func checkMaintenance() bool {
+	flag, err := configure.Get("maintenance", "on")
+	if err != nil {
+		return true
+	}
+	return strings.EqualFold(flag, "on")
 }
