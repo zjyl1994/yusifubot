@@ -20,10 +20,10 @@ func userLootCount(rel common.UserRel) ([]lootItem, error) {
 func chatLootRank(chatId, objId int64) ([]lootItem, error) {
 	query := vars.DBInstance
 	if objId == 0 { // 全局排行
-		sql := "SELECT b.user_name AS `name`,SUM(a.amount) AS `amount` FROM catch_rets a LEFT JOIN tg_users b ON a.user_id = b.user_id WHERE a.chat_id = ?  ORDER BY `amount` DESC LIMIT 10"
+		sql := "SELECT b.user_name AS `name`,SUM(a.amount) AS `amount` FROM catch_rets a LEFT JOIN tg_users b ON a.user_id = b.user_id WHERE a.chat_id = ? GROUP BY a.user_id ORDER BY `amount` DESC LIMIT 10"
 		query = query.Raw(sql, chatId)
 	} else { // 分类排行
-		sql := "SELECT b.user_name AS `name`,SUM(a.amount) AS `amount` FROM catch_rets a LEFT JOIN tg_users b ON a.user_id = b.user_id WHERE a.chat_id = ? AND a.obj_id = ?  ORDER BY `amount` DESC LIMIT 10"
+		sql := "SELECT b.user_name AS `name`,SUM(a.amount) AS `amount` FROM catch_rets a LEFT JOIN tg_users b ON a.user_id = b.user_id WHERE a.chat_id = ? AND a.obj_id = ? GROUP BY a.user_id ORDER BY `amount` DESC LIMIT 10"
 		query = query.Raw(sql, chatId, objId)
 	}
 
