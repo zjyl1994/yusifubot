@@ -57,7 +57,7 @@ func CatchRank(msg *tgbotapi.Message) error {
 	var objName string
 	var objEmoji string
 	if target := msg.CommandArguments(); len(target) > 0 {
-		cobj, err := catchobj.GetCatchObjByShorthand(target)
+		cobj, err := catchobj.GetCatchObjByShorthand(msg.Chat.ID, target)
 		if err != nil {
 			return err
 		}

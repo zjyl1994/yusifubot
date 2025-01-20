@@ -9,7 +9,6 @@ import (
 	"unicode"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
@@ -62,17 +61,16 @@ func CatchDispatcher(msg *tgbotapi.Message) error {
 }
 
 // 结构化后的抓方法
-func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) error {
-	// catchTarget为空时表示混池
+func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (err error) {
 	// 检查抓取对象
-	cobj, err := catchobj.GetCatchObjByShorthand(catchTarget)
+	cobj, err := catchobj.GetCatchObjByShorthand(msg.Chat.ID, catchTarget)
 	if err != nil {
 		return err
 	}
 	if cobj == nil || (cobj.ChatId != 0 && cobj.ChatId != msg.Chat.ID) || cobj.Stamina == 0 {
 		return utils.NewBizErr("尚未开放" + catchTarget + "的捕捉")
 	}
-	logrus.Debugln(cobj)
+
 	// 计算真实抓数
 	user := common.UserRel{
 		ChatId: msg.Chat.ID,
