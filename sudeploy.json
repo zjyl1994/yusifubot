@@ -1,0 +1,9 @@
+{
+    "name":"yusifubot",
+    "description":"Yusifu telegram bot",
+    "exec":"/usr/local/bin/yusifubot",
+    "server":"usb.infra.lv6.dev",
+    "port":36000,
+    "user":"root",
+    "binary":"./yusifubot"
+}
