@@ -62,13 +62,25 @@ func CatchDispatcher(msg *tgbotapi.Message) error {
 
 // 结构化后的抓方法
 func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (err error) {
-	// 检查抓取对象
-	cobj, err := catchobj.GetCatchObjByShorthand(msg.Chat.ID, catchTarget)
-	if err != nil {
-		return err
-	}
-	if cobj == nil || (cobj.ChatId != 0 && cobj.ChatId != msg.Chat.ID) || cobj.Stamina == 0 {
-		return utils.NewBizErr("尚未开放" + catchTarget + "的捕捉")
+	var cobj *catchobj.CatchObj
+	if catchTarget == "" { // 检查是否随机选人抽
+		objs, err := catchobj.GetCatchObjs(msg.Chat.ID)
+		if err != nil {
+			return err
+		}
+		if len(objs) == 0 {
+			return utils.NewBizErr("尚未开放任何捕捉")
+		}
+		cobj = utils.PickOne(objs) // 随机选择抓取目标
+	} else { // 固定抽取
+		// 检查抓取对象
+		cobj, err = catchobj.GetCatchObjByShorthand(msg.Chat.ID, catchTarget)
+		if err != nil {
+			return err
+		}
+		if cobj == nil || (cobj.ChatId != 0 && cobj.ChatId != msg.Chat.ID) || cobj.Stamina == 0 {
+			return utils.NewBizErr("尚未开放" + catchTarget + "的捕捉")
+		}
 	}
 
 	// 计算真实抓数
