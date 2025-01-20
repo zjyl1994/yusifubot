@@ -11,7 +11,7 @@ type lootItem struct {
 }
 
 func userLootCount(rel common.UserRel) ([]lootItem, error) {
-	querySQL := "SELECT b.`name`,SUM(a.amount) as `amount` FROM catch_rets a LEFT JOIN catch_objs b ON a.obj_id=b.id WHERE a.chat_id = ? AND a.user_id = ? ORDER BY `amount` DESC"
+	querySQL := "SELECT b.`name`,SUM(a.amount) as `amount` FROM catch_rets a LEFT JOIN catch_objs b ON a.obj_id=b.id WHERE a.chat_id = ? AND a.user_id = ? GROUP BY a.obj_id ORDER BY `amount` DESC"
 	var result []lootItem
 	err := vars.DBInstance.Raw(querySQL, rel.ChatId, rel.UserId).Scan(&result).Error
 	return result, err
