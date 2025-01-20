@@ -47,12 +47,12 @@ func CatchDispatcher(msg *tgbotapi.Message) error {
 		if strings.EqualFold(catchName, "all") {
 			catchName = ""
 			num = catchNum("ALL")
-		}
-
-		if len(matches) > 2 && matches[2] != "" {
-			num = catchNum(matches[2])
-		} else {
-			num = catchNum("1")
+		} else { // 明确有抽谁，计算抽的数量
+			if len(matches) > 2 && matches[2] != "" {
+				num = catchNum(matches[2])
+			} else {
+				num = catchNum("1")
+			}
 		}
 
 		return CatchAction(msg, catchName, num)
@@ -62,6 +62,7 @@ func CatchDispatcher(msg *tgbotapi.Message) error {
 
 // 结构化后的抓方法
 func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (err error) {
+	// logrus.Debugln("catchTarget:", catchTarget, "catchNum:", catchNum)
 	var cobj *catchobj.CatchObj
 	if catchTarget == "" { // 检查是否随机选人抽
 		objs, err := catchobj.GetCatchObjs(msg.Chat.ID)
@@ -144,7 +145,8 @@ func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (
 	// 多抽模式
 	catchSuccessRate := strconv.FormatFloat(float64(catchAmount)/float64(realCatchNum)*100, 'f', 2, 64)
 	var sb strings.Builder
-	sb.WriteString("捕捉结果：")
+	sb.WriteString(cobj.Name)
+	sb.WriteString(" 捕捉结果：")
 	for _, v := range catchResult {
 		if v {
 			if cobj.Emoji != "" {
