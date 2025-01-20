@@ -18,7 +18,7 @@ import (
 	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
-var catchCommandRegexp = regexp.MustCompile(`(?i)^catch([a-zA-Z]+?)(\d+|all)?$`)
+var catchCommandRegexp = regexp.MustCompile(`(?i)^catch([a-zA-Z]+?)?(\d+|all)?$`)
 
 // 所有catch开头命令由此分发
 func CatchDispatcher(msg *tgbotapi.Message) error {
@@ -31,9 +31,6 @@ func CatchDispatcher(msg *tgbotapi.Message) error {
 	}
 	// 单纯的捕捉指令，合并成组合指令走正则解析
 	if command == "catch" {
-		if len(args) == 0 {
-			return utils.ReplyTextToTelegram(msg, "👀 你要捉谁？", false)
-		}
 		var builder strings.Builder
 		builder.WriteString(command)
 		for _, r := range args {
@@ -47,6 +44,11 @@ func CatchDispatcher(msg *tgbotapi.Message) error {
 	if matches := catchCommandRegexp.FindStringSubmatch(command); matches != nil {
 		var num catchNum
 		catchName := matches[1]
+		// catchName为all时代表混抽所有体力
+		if strings.EqualFold(catchName, "all") {
+			catchName = ""
+			num = catchNum("ALL")
+		}
 
 		if len(matches) > 2 && matches[2] != "" {
 			num = catchNum(matches[2])
@@ -61,6 +63,7 @@ func CatchDispatcher(msg *tgbotapi.Message) error {
 
 // 结构化后的抓方法
 func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) error {
+	// catchTarget为空时表示混池
 	// 检查抓取对象
 	cobj, err := catchobj.GetCatchObjByShorthand(catchTarget)
 	if err != nil {

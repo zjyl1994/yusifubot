@@ -16,6 +16,7 @@ type CatchObj struct {
 	CatchMissSticker utils.Array[string] `gorm:"type:TEXT;serializer:json"` // 捕捉失败贴图
 	CatchHitText     utils.Array[string] `gorm:"type:TEXT;serializer:json"` // 捕捉成功提示语
 	CatchHitSticker  utils.Array[string] `gorm:"type:TEXT;serializer:json"` // 捕捉成功贴图
+	TgUserId         string              // Tg用户id
 }
 
 func (obj CatchObj) GetMissText() string {
