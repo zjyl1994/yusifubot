@@ -57,6 +57,7 @@ func Start() {
 		// 路由组
 		adminG := app.Group("/admin", authWare)
 		adminG.Post("/setmaintenance", setMaintenanceHandler)  // 设置维护状态API
+		adminG.Post("/giveobj", catchGameHandler.GiveObj)      // 给特定数量对象API
 		adminG.Post("/addsp", catchGameHandler.AddStaminPoint) // 增加体力API
 		adminG.Post("/ntunnel", adaptor.HTTPHandler(tun))      // 远程DB隧道
 	}

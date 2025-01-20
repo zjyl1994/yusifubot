@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catch"
+	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
 	"golang.org/x/sync/singleflight"
@@ -68,4 +69,33 @@ func (h *catchGameHandler) AddStaminPoint(c *fiber.Ctx) error {
 		return err
 	}
 	return c.SendString(sp.String())
+}
+
+func (h *catchGameHandler) GiveObj(c *fiber.Ctx) error {
+	userId, err := strconv.ParseInt(c.FormValue("user"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("user:" + err.Error())
+	}
+	chatId, err := strconv.ParseInt(c.FormValue("chat"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("chat:" + err.Error())
+	}
+	objId, err := strconv.ParseInt(c.FormValue("obj"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("obj:" + err.Error())
+	}
+	amount, err := strconv.ParseInt(c.FormValue("amount"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("amount:" + err.Error())
+	}
+	if userId == 0 || chatId == 0 || amount == 0 || objId == 0 {
+		return c.Status(fiber.StatusBadRequest).SendString("user, chat, obj, amount must be set")
+	}
+
+	user := common.UserRel{ChatId: chatId, UserId: userId}
+	_, err = catchret.AddCatchResult(user, objId, amount)
+	if err != nil {
+		return err
+	}
+	return c.SendString("OK")
 }
