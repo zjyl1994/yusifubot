@@ -214,10 +214,11 @@ func multiCatch(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (e
 			sb.WriteString(CATCH_MISS_EMOJI)
 		}
 	}
-	sb.WriteRune('\n')
-	sb.WriteString("明细如下:\n")
-	for cobjID, amount := range catchCounterMap {
-		sb.WriteString(fmt.Sprintf("%s:%d\n", catchNameRel[cobjID], amount))
+	if totalCatch > 0 {
+		sb.WriteString("\n明细如下:\n")
+		for cobjID, amount := range catchCounterMap {
+			sb.WriteString(fmt.Sprintf("%s:%d\n", catchNameRel[cobjID], amount))
+		}
 	}
 	return utils.ReplyTextToTelegram(msg, sb.String(), false)
 }
