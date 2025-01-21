@@ -62,7 +62,9 @@ func CatchDispatcher(msg *tgbotapi.Message) error {
 
 // 结构化后的抓方法
 func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (err error) {
-	// logrus.Debugln("catchTarget:", catchTarget, "catchNum:", catchNum)
+	if catchNum.IsAll() || catchNum.GetNum() > 1 { // 抓多个场景单独处理
+		return multiCatch(msg, catchTarget, catchNum)
+	}
 	var cobj *catchobj.CatchObj
 	if catchTarget == "" { // 检查是否随机选人抽
 		objs, err := catchobj.GetCatchObjs(msg.Chat.ID)
@@ -84,71 +86,126 @@ func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (
 		}
 	}
 
-	// 计算真实抓数
+	// 消耗用户体力
 	user := common.UserRel{
 		ChatId: msg.Chat.ID,
 		UserId: msg.From.ID,
 	}
-	var realCatchNum int64
-	if catchNum.IsAll() {
-		sp, err := stamina.GetStaminPoint(user)
+	_, err = stamina.UseStaminPoint(user, cobj.Stamina)
+	if err != nil {
+		return err
+	}
+
+	if rand.Float64() < cobj.CatchRate { // 计算抓结果
+		// 写入结果
+		_, err = catchret.AddCatchResult(user, cobj.ID, 1)
 		if err != nil {
 			return err
 		}
-		realCatchNum = sp.Current() / cobj.Stamina
-		if realCatchNum == 0 {
-			realCatchNum = 1
+		// 生成回复消息
+		if len(cobj.CatchHitSticker) > 0 {
+			return utils.ReplyStickerToTelegram(msg, cobj.GetHitSticker())
+		} else if len(cobj.CatchHitText) > 0 {
+			return utils.ReplyTextToTelegram(msg, cobj.GetHitText(), false)
+		} else {
+			return utils.ReplyTextToTelegram(msg, "成功捕捉"+cobj.Name, false)
 		}
 	} else {
-		realCatchNum = catchNum.GetNum()
+		if len(cobj.CatchMissSticker) > 0 {
+			return utils.ReplyStickerToTelegram(msg, cobj.GetMissSticker())
+		} else if len(cobj.CatchMissText) > 0 {
+			return utils.ReplyTextToTelegram(msg, cobj.GetMissText(), false)
+		} else {
+			return utils.ReplyTextToTelegram(msg, "手滑了，"+cobj.Name+"逃走了", false)
+		}
+	}
+}
+
+func multiCatch(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (err error) {
+	// 获取用户体力
+	user := common.UserRel{
+		ChatId: msg.Chat.ID,
+		UserId: msg.From.ID,
+	}
+	sp, err := stamina.GetStaminPoint(user)
+	if err != nil {
+		return err
+	}
+	// 获取需要计算的对象
+	var catchObjs []*catchobj.CatchObj
+	if catchTarget != "" {
+		cobj, err := catchobj.GetCatchObjByShorthand(msg.Chat.ID, catchTarget)
+		if err != nil {
+			return err
+		}
+		if cobj == nil || (cobj.ChatId != 0 && cobj.ChatId != msg.Chat.ID) || cobj.Stamina == 0 {
+			return utils.NewBizErr("尚未开放" + catchTarget + "的捕捉")
+		}
+		catchObjs = []*catchobj.CatchObj{cobj}
+	} else {
+		catchObjs, err = catchobj.GetCatchObjs(msg.Chat.ID)
+		if err != nil {
+			return err
+		}
+		if len(catchObjs) == 0 {
+			return utils.NewBizErr("尚未开放任何捕捉")
+		}
+	}
+	// 获取抓取列表
+	var catchList = make([]*catchobj.CatchObj, 0)
+	var remainSp = sp.Current()
+	var costSp int64 = 0
+	var counter int64 = 0
+	for {
+		cobj := utils.PickOne(catchObjs)
+		if catchNum.IsAll() {
+			if cobj.Stamina > remainSp {
+				break
+			}
+		} else {
+			if counter > catchNum.GetNum() {
+				break
+			}
+		}
+		remainSp -= cobj.Stamina
+		costSp += cobj.Stamina
+		counter++
+		catchList = append(catchList, cobj)
+	}
+	if counter == 0 {
+		return utils.NewBizErr("体力不足无法捕捉," + sp.String())
 	}
 	// 消耗用户体力
-	_, err = stamina.UseStaminPoint(user, realCatchNum*cobj.Stamina)
+	_, err = stamina.UseStaminPoint(user, costSp)
 	if err != nil {
 		return err
 	}
 	// 计算抓结果
-	catchResult := make([]bool, realCatchNum)
-	var catchAmount int64
-	for i := range realCatchNum {
-		ret := rand.Float64() < cobj.CatchRate
-		catchResult[i] = ret
-		if ret {
-			catchAmount++
+	catchCounterMap := make(map[int64]int64)
+	catchNameRel := make(map[int64]string)
+	var totalCatch int64
+	for i, cobj := range catchList {
+		if rand.Float64() < cobj.CatchRate {
+			catchNameRel[cobj.ID] = cobj.Name
+			catchCounterMap[cobj.ID]++
+			totalCatch++
+		} else {
+			catchList[i] = nil
 		}
 	}
 	// 写入结果
-	_, err = catchret.AddCatchResult(user, cobj.ID, catchAmount)
-	if err != nil {
-		return err
-	}
-	// 生成回复的消息
-	if realCatchNum == 1 { // 单个捕捉需要支持定制文案和sticker
-		if catchResult[0] {
-			if len(cobj.CatchHitSticker) > 0 {
-				return utils.ReplyStickerToTelegram(msg, cobj.GetHitSticker())
-			} else if len(cobj.CatchHitText) > 0 {
-				return utils.ReplyTextToTelegram(msg, cobj.GetHitText(), false)
-			} else {
-				return utils.ReplyTextToTelegram(msg, "成功捕捉"+cobj.Name, false)
-			}
-		} else {
-			if len(cobj.CatchMissSticker) > 0 {
-				return utils.ReplyStickerToTelegram(msg, cobj.GetMissSticker())
-			} else if len(cobj.CatchMissText) > 0 {
-				return utils.ReplyTextToTelegram(msg, cobj.GetMissText(), false)
-			} else {
-				return utils.ReplyTextToTelegram(msg, "手滑了，"+cobj.Name+"逃走了", false)
-			}
+	for cobjID, amount := range catchCounterMap {
+		_, err = catchret.AddCatchResult(user, cobjID, amount)
+		if err != nil {
+			return err
 		}
 	}
-	// 多抽模式
-	catchSuccessRate := strconv.FormatFloat(float64(catchAmount)/float64(realCatchNum)*100, 'f', 2, 64)
+	// 生成回复的消息
+	catchSuccessRate := strconv.FormatFloat(float64(totalCatch)/float64(len(catchList))*100, 'f', 2, 64)
 	var sb strings.Builder
-	sb.WriteString(cobj.Name)
-	sb.WriteString(" 捕捉结果：")
-	for _, v := range catchResult {
-		if v {
+	sb.WriteString("捕捉结果：")
+	for _, cobj := range catchList {
+		if cobj != nil {
 			if cobj.Emoji != "" {
 				sb.WriteString(cobj.Emoji)
 			} else {
@@ -159,6 +216,12 @@ func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (
 		}
 	}
 	sb.WriteRune('\n')
+	for cobjID, amount := range catchCounterMap {
+		sb.WriteString(catchNameRel[cobjID])
+		sb.WriteString(": ")
+		sb.WriteString(strconv.FormatInt(amount, 10))
+		sb.WriteRune('\n')
+	}
 	sb.WriteString("本次成功率：")
 	sb.WriteString(catchSuccessRate)
 	sb.WriteString("%")

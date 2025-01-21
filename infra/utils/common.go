@@ -15,5 +15,11 @@ func COALESCE[T comparable](elem ...T) T {
 }
 
 func PickOne[T any](input []T) T {
+	if len(input) == 0 {
+		panic("PickOne empty input")
+	}
+	if len(input) == 1 {
+		return input[0]
+	}
 	return input[rand.IntN(len(input))]
 }
