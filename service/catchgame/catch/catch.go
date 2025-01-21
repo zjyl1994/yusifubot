@@ -162,7 +162,7 @@ func multiCatch(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (e
 				break
 			}
 		} else {
-			if counter > catchNum.GetNum() {
+			if counter >= catchNum.GetNum() {
 				break
 			}
 		}
