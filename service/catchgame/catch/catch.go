@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand/v2"
 	"regexp"
-	"strconv"
 	"strings"
 	"unicode"
 
@@ -201,9 +200,9 @@ func multiCatch(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (e
 		}
 	}
 	// 生成回复的消息
-	catchSuccessRate := strconv.FormatFloat(float64(totalCatch)/float64(len(catchList))*100, 'f', 2, 64)
 	var sb strings.Builder
-	sb.WriteString("捕捉结果：")
+	sb.WriteString(fmt.Sprintf("消耗体力%d, 捕捉%d次，成功率%.2f%%\n", costSp, len(catchList), float64(totalCatch)/float64(len(catchList))*100))
+	sb.WriteString("结果：")
 	for _, cobj := range catchList {
 		if cobj != nil {
 			if cobj.Emoji != "" {
@@ -216,14 +215,9 @@ func multiCatch(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (e
 		}
 	}
 	sb.WriteRune('\n')
+	sb.WriteString("明细如下:\n")
 	for cobjID, amount := range catchCounterMap {
-		sb.WriteString(catchNameRel[cobjID])
-		sb.WriteString(": ")
-		sb.WriteString(strconv.FormatInt(amount, 10))
-		sb.WriteRune('\n')
+		sb.WriteString(fmt.Sprintf("%s:%d\n", catchNameRel[cobjID], amount))
 	}
-	sb.WriteString("本次成功率：")
-	sb.WriteString(catchSuccessRate)
-	sb.WriteString("%")
 	return utils.ReplyTextToTelegram(msg, sb.String(), false)
 }
