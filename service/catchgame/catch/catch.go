@@ -201,8 +201,7 @@ func multiCatch(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (e
 	}
 	// 生成回复的消息
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("消耗体力%d, 捕捉%d次，成功率%.2f%%\n", costSp, len(catchList), float64(totalCatch)/float64(len(catchList))*100))
-	sb.WriteString("结果：")
+	sb.WriteString("捕捉结果：")
 	for _, cobj := range catchList {
 		if cobj != nil {
 			if cobj.Emoji != "" {
@@ -214,11 +213,15 @@ func multiCatch(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (e
 			sb.WriteString(CATCH_MISS_EMOJI)
 		}
 	}
+	sb.WriteString("\n\n")
 	if totalCatch > 0 {
-		sb.WriteString("\n明细如下:\n")
+		sb.WriteString(fmt.Sprintf("成功率%.2f%%,明细如下:\n", float64(totalCatch)/float64(len(catchList))*100))
 		for cobjID, amount := range catchCounterMap {
 			sb.WriteString(fmt.Sprintf("%s:%d\n", catchNameRel[cobjID], amount))
 		}
+	} else {
+		sb.WriteString(tg.GetTgUserName(msg.From))
+		sb.WriteString("两手空空，不知所措")
 	}
 	return utils.ReplyTextToTelegram(msg, sb.String(), false)
 }
