@@ -26,14 +26,14 @@ func (h *catchGameHandler) Index(c *fiber.Ctx) error {
 	})
 }
 
-func (h *catchGameHandler) getStatData() (map[string][]map[string]any, error) {
+func (h *catchGameHandler) getStatData() ([]catch.StatResult, error) {
 	result, err, _ := h.statSf.Do("stat", func() (any, error) {
 		return catch.Stat()
 	})
 	if err != nil {
 		return nil, err
 	}
-	return result.(map[string][]map[string]any), nil
+	return result.([]catch.StatResult), nil
 }
 
 func (h *catchGameHandler) Stat(c *fiber.Ctx) error {

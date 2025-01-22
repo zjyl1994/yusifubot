@@ -95,14 +95,18 @@ func runStatSQL(sql string) ([]map[string]any, error) {
 	return result, err
 }
 
-func Stat() (map[string][]map[string]any, error) {
-	result := make(map[string][]map[string]any)
-	for k, v := range statSQLMap {
-		r, err := runStatSQL(v)
+func Stat() ([]StatResult, error) {
+	result := make([]StatResult, len(statSQLs))
+	for i, item := range statSQLs {
+		r, err := runStatSQL(item.SQL)
 		if err != nil {
 			return nil, err
 		}
-		result[k] = r
+		result[i] = StatResult{
+			Name:   item.Name,
+			Desc:   item.Desc,
+			Result: r,
+		}
 	}
 	return result, nil
 }

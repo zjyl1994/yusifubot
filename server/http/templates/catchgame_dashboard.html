@@ -16,20 +16,23 @@
             <span><a href="/catchgame/stat">JSON 格式数据</a></span>
         </div>
         <hr>
-        {{range $name, $tableData := .stat}}
-        <h2>{{$name}}</h2>
+        {{range .stat}}
+        <h2 id="{{.Name}}">{{.Name}}</h2>
+        {{if .Desc}}
+        <p style="color:grey">{{.Desc}}</p>
+        {{end}}
         <table>
             <thead>
                 <tr>
-                    {{- if $tableData }}
-                    {{- range $key, $value := (index $tableData 0) }}
+                    {{- if .Result }}
+                    {{- range $key, $value := (index .Result 0) }}
                     <th>{{ $key }}</th>
                     {{- end }}
                     {{- end }}
                 </tr>
             </thead>
             <tbody>
-                {{- range $tableData }}
+                {{- range .Result }}
                 <tr>
                     {{- range $value := . }}
                     <td>{{ $value }}</td>
