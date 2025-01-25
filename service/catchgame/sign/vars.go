@@ -8,8 +8,8 @@ import (
 
 var (
 	// 默认签到体力范围
-	defaultSpMin int64 = 50
-	defaultSpMax int64 = 300
+	defaultSpMin int64 = 30
+	defaultSpMax int64 = 80
 
 	signLock         = kmutex.NewKmutex(common.UserRelHasher, 100)
 	ErrAlreadySigned = utils.NewBizErr("今天已经签过到了哦~")
