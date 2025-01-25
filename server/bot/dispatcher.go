@@ -67,6 +67,8 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 		return catch.MyCatch(msg)
 	case "rankcatch":
 		return catch.CatchRank(msg)
+	case "sign":
+		return catch.SignAction(msg)
 	default:
 		return utils.ReplyTextToTelegram(msg, "未知命令", false)
 	}
