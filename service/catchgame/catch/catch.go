@@ -16,7 +16,10 @@ import (
 	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
-var catchCommandRegexp = regexp.MustCompile(`(?i)^catch([a-zA-Z]+?)?(\d+|all)?$`)
+var (
+	catchCommandRegexp = regexp.MustCompile(`(?i)^catch([a-zA-Z]+?)?(\d+|all)?$`)
+	wellCounter        = NewWellCtr(20, 100) // 20个一井，最多存储100条
+)
 
 // 所有catch开头命令由此分发
 func CatchDispatcher(msg *tgbotapi.Message) error {
@@ -95,7 +98,8 @@ func CatchAction(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (
 		return err
 	}
 
-	if rand.Float64() < cobj.CatchRate { // 计算抓结果
+	// 计算抓取结果
+	if wellCounter.Check(wellKey{ObjId: cobj.ID, UserId: msg.From.ID}, rand.Float64() < cobj.CatchRate) {
 		// 写入结果
 		_, err = catchret.AddCatchResult(user, cobj.ID, 1)
 		if err != nil {
@@ -184,7 +188,7 @@ func multiCatch(msg *tgbotapi.Message, catchTarget string, catchNum catchNum) (e
 	catchNameRel := make(map[int64]string)
 	var totalCatch int64
 	for i, cobj := range catchList {
-		if rand.Float64() < cobj.CatchRate {
+		if wellCounter.Check(wellKey{ObjId: cobj.ID, UserId: msg.From.ID}, rand.Float64() < cobj.CatchRate) {
 			catchNameRel[cobj.ID] = cobj.Name
 			catchCounterMap[cobj.ID]++
 			totalCatch++
