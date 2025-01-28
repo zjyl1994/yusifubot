@@ -1,9 +1,10 @@
 {
-    "name":"yusifubot",
-    "description":"Yusifu telegram bot",
-    "exec":"/usr/local/bin/yusifubot",
-    "server":"usb.infra.lv6.dev",
-    "port":36000,
-    "user":"root",
-    "binary":"./yusifubot"
+    "name": "yusifubot",
+    "description": "Yusifu telegram bot",
+    "exec": "/usr/local/bin/yusifubot",
+    "server": "33596250-29a8-431e-af9e-5e731b9e3d0a.lv6.dev",
+    "port": 44902,
+    "user": "root",
+    "skip_verify":true,
+    "binary": "./yusifubot"
 }
