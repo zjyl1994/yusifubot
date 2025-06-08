@@ -15,12 +15,7 @@ import (
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/server/bot"
-	"github.com/zjyl1994/yusifubot/server/http"
-	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
-	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
-	"github.com/zjyl1994/yusifubot/service/catchgame/sign"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
-	"github.com/zjyl1994/yusifubot/service/configure"
 	"github.com/zjyl1994/yusifubot/service/tg"
 	"gorm.io/gorm"
 )
@@ -40,8 +35,6 @@ func Start() (err error) {
 		return errors.New("YUSIFUBOT_BOT_TOKEN is not set")
 	}
 
-	vars.AdminUser = os.Getenv("YUSIFUBOT_ADMIN_USER")
-	vars.AdminPass = os.Getenv("YUSIFUBOT_ADMIN_PASS")
 	// 初始化数据库
 	vars.DBInstance, err = gorm.Open(sqlite.Open(vars.DatabasePath), &gorm.Config{
 		Logger: gorm_logrus.New(),
@@ -58,8 +51,7 @@ func Start() (err error) {
 	if err != nil {
 		return err
 	}
-	err = vars.DBInstance.AutoMigrate(&tg.Chat{}, &tg.User{}, &stamina.Stamina{}, &sign.CatchSign{},
-		&catchobj.CatchObj{}, &catchret.CatchRet{}, &catchret.CatchDetail{}, &configure.Configure{})
+	err = vars.DBInstance.AutoMigrate(&tg.Chat{}, &tg.User{}, &stamina.Stamina{})
 	if err != nil {
 		return err
 	}
@@ -71,8 +63,6 @@ func Start() (err error) {
 	vars.BotInstance.Debug = vars.DebugMode
 	// 启动 bot
 	go bot.Start()
-	// 启动 http
-	go http.Start()
 	// 响应 ctrl+c
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)

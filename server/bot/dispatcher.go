@@ -7,8 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
-	"github.com/zjyl1994/yusifubot/service/catchgame/catch"
-	"github.com/zjyl1994/yusifubot/service/configure"
 )
 
 func Start() {
@@ -32,11 +30,6 @@ func Start() {
 			continue
 		}
 
-		if checkMaintenance() {
-			utils.ReplyTextToTelegram(update.Message, "Bot维护中，暂时无法使用", false)
-			continue
-		}
-
 		err := commandDispatcher(update.Message)
 		if err != nil {
 			errMsg := "发生错误，请联系管理员"
@@ -54,30 +47,16 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 	command := msg.Command()
 	args := strings.Fields(msg.CommandArguments())
 	logrus.Debugln("Received", command, args)
-
-	// catch开头的命令逻辑复杂需要单独分发逻辑处理
-	if strings.HasPrefix(command, "catch") {
-		return catch.CatchDispatcher(msg)
-	}
-	// 在此分发其他命令
+	// 在此分发命令
 	switch strings.ToLower(command) {
-	case "debug":
-		return handleDebugInfo(msg)
-	case "mycatch":
-		return catch.MyCatch(msg)
-	case "rankcatch":
-		return catch.CatchRank(msg)
-	case "sign":
-		return catch.SignAction(msg)
-	default:
-		return utils.ReplyTextToTelegram(msg, "未知命令", false)
-	}
-}
+	case "start":
+		return utils.ReplyTextToTelegram(msg, "欢迎使用 YusifuBot", false)
+	case "catch":
 
-func checkMaintenance() bool {
-	flag, err := configure.Get("maintenance", "on")
-	if err != nil {
-		return true
+	case "mycatch":
+
+	case "rankcatch":
+
 	}
-	return strings.EqualFold(flag, "on")
+	return nil
 }
