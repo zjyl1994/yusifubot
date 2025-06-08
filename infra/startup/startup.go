@@ -15,6 +15,7 @@ import (
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/server/bot"
+	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
 	"github.com/zjyl1994/yusifubot/service/tg"
 	"gorm.io/gorm"
@@ -34,6 +35,7 @@ func Start() (err error) {
 	if vars.BotToken == "" {
 		return errors.New("YUSIFUBOT_BOT_TOKEN is not set")
 	}
+	vars.AdminUserId = os.Getenv("YUSIFUBOT_ADMIN_USER_ID")
 
 	// 初始化数据库
 	vars.DBInstance, err = gorm.Open(sqlite.Open(vars.DatabasePath), &gorm.Config{
@@ -51,7 +53,8 @@ func Start() (err error) {
 	if err != nil {
 		return err
 	}
-	err = vars.DBInstance.AutoMigrate(&tg.Chat{}, &tg.User{}, &stamina.Stamina{})
+	err = vars.DBInstance.AutoMigrate(&tg.Chat{}, &tg.User{}, &stamina.Stamina{},
+		&catchobj.CatchObj{})
 	if err != nil {
 		return err
 	}

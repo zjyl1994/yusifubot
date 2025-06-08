@@ -7,6 +7,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
+	"github.com/zjyl1994/yusifubot/service/catchgame/action"
+	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
 func Start() {
@@ -47,6 +49,9 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 	command := msg.Command()
 	args := strings.Fields(msg.CommandArguments())
 	logrus.Debugln("Received", command, args)
+	if err := tg.UpdateChatAndUserName(msg); err != nil {
+		logrus.Warningln("Update chat and user name failed", err.Error())
+	}
 	// 在此分发命令
 	switch strings.ToLower(command) {
 	case "start":
@@ -57,6 +62,10 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 
 	case "rankcatch":
 
+	case "setnickname":
+		return action.SetMyNicknameHandler(msg)
+	case "setemoji":
+		return action.SetMyEmojiHandler(msg)
 	}
 	return nil
 }
