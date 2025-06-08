@@ -36,12 +36,13 @@ func CatchMeHandler(msg *tgbotapi.Message) error {
 func SetMyNicknameHandler(msg *tgbotapi.Message) error {
 	arg := msg.CommandArguments()
 	err := catchobj.UpdateNickName(common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, arg)
-	if err != nil {
-		if err == catchobj.ErrCatchObjNotFound {
-			return createCatchObj(msg, arg, "")
-		}
+	if err == catchobj.ErrCatchObjNotFound {
+		err = createCatchObj(msg, arg, "")
 	}
-	return nil
+	if err != nil {
+		return err
+	}
+	return utils.ReplyTextToTelegram(msg, "成功设置昵称为"+arg, false)
 }
 
 // 设置emoji
@@ -51,12 +52,13 @@ func SetMyEmojiHandler(msg *tgbotapi.Message) error {
 		return utils.ReplyTextToTelegram(msg, "只能用一个emoji哦", false)
 	}
 	err := catchobj.UpdateEmoji(common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, arg)
-	if err != nil {
-		if err == catchobj.ErrCatchObjNotFound {
-			return createCatchObj(msg, "", arg)
-		}
+	if err == catchobj.ErrCatchObjNotFound {
+		err = createCatchObj(msg, "", arg)
 	}
-	return nil
+	if err != nil {
+		return err
+	}
+	return utils.ReplyTextToTelegram(msg, "成功设置emoji为"+arg, false)
 }
 
 // 静默创建可抓账号
