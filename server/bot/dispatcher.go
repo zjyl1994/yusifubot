@@ -56,8 +56,10 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 	switch strings.ToLower(command) {
 	case "start":
 		return utils.ReplyTextToTelegram(msg, "欢迎使用 YusifuBot", false)
-	case "catch":
-
+	case "catch", "catchall", "catch5", "catch10":
+		return action.CatchHandler(msg)
+	case "catchme":
+		return action.CatchMeHandler(msg)
 	case "mycatch":
 
 	case "rankcatch":

@@ -3,6 +3,7 @@ package action
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/zjyl1994/yusifubot/infra/utils"
+	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"github.com/zjyl1994/yusifubot/service/tg"
@@ -12,7 +13,7 @@ import (
 
 // 切换可抓状态
 func CatchMeHandler(msg *tgbotapi.Message) error {
-	current, err := catchobj.ToggleCatch(common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID})
+	current, err := catchobj.ToggleCatch(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID})
 	if err != nil {
 		if err == catchobj.ErrCatchObjNotFound {
 			err = createCatchObj(msg, "", "")
@@ -35,7 +36,7 @@ func CatchMeHandler(msg *tgbotapi.Message) error {
 // 设置昵称
 func SetMyNicknameHandler(msg *tgbotapi.Message) error {
 	arg := msg.CommandArguments()
-	err := catchobj.UpdateNickName(common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, arg)
+	err := catchobj.UpdateNickName(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, arg)
 	if err == catchobj.ErrCatchObjNotFound {
 		err = createCatchObj(msg, arg, "")
 	}
@@ -51,7 +52,7 @@ func SetMyEmojiHandler(msg *tgbotapi.Message) error {
 	if !isSingleEmoji(arg) {
 		return utils.ReplyTextToTelegram(msg, "只能用一个emoji哦", false)
 	}
-	err := catchobj.UpdateEmoji(common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, arg)
+	err := catchobj.UpdateEmoji(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, arg)
 	if err == catchobj.ErrCatchObjNotFound {
 		err = createCatchObj(msg, "", arg)
 	}
@@ -69,7 +70,7 @@ func createCatchObj(msg *tgbotapi.Message, nickName, emoji string) error {
 	if emoji == "" {
 		emoji = CATCH_DEFAULT_EMOJI
 	}
-	return catchobj.CreateCatchObj(common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, nickName, emoji)
+	return catchobj.CreateCatchObj(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, nickName, emoji)
 }
 
 // 判断字符串是否是一个单一的 Emoji

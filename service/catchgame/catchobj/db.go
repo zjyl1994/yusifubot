@@ -3,15 +3,14 @@ package catchobj
 import (
 	"errors"
 
-	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"gorm.io/gorm"
 )
 
 var ErrCatchObjNotFound = errors.New("catch obj not found")
 
-func ToggleCatch(user common.UserRel) (bool, error) {
-	obj, err := GetCatchObj(user)
+func ToggleCatch(db *gorm.DB, user common.UserRel) (bool, error) {
+	obj, err := GetCatchObj(db, user)
 	if err != nil {
 		return false, err
 	}
@@ -19,12 +18,12 @@ func ToggleCatch(user common.UserRel) (bool, error) {
 		return false, ErrCatchObjNotFound
 	}
 	obj.Enabled = !obj.Enabled
-	return obj.Enabled, vars.DBInstance.Save(&obj).Error
+	return obj.Enabled, db.Save(&obj).Error
 }
 
-func GetCatchObj(user common.UserRel) (*CatchObj, error) {
+func GetCatchObj(db *gorm.DB, user common.UserRel) (*CatchObj, error) {
 	var obj CatchObj
-	err := vars.DBInstance.Where(CatchObj{ChatId: user.ChatId, UserId: user.UserId}).First(&obj).Error
+	err := db.Where(CatchObj{ChatId: user.ChatId, UserId: user.UserId}).First(&obj).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
@@ -34,7 +33,7 @@ func GetCatchObj(user common.UserRel) (*CatchObj, error) {
 	return &obj, nil
 }
 
-func CreateCatchObj(user common.UserRel, name, emoji string) error {
+func CreateCatchObj(db *gorm.DB, user common.UserRel, name, emoji string) error {
 	obj := CatchObj{
 		ChatId:  user.ChatId,
 		UserId:  user.UserId,
@@ -42,11 +41,11 @@ func CreateCatchObj(user common.UserRel, name, emoji string) error {
 		Name:    name,
 		Emoji:   emoji,
 	}
-	return vars.DBInstance.Create(&obj).Error
+	return db.Create(&obj).Error
 }
 
-func UpdateNickName(user common.UserRel, name string) error {
-	obj, err := GetCatchObj(user)
+func UpdateNickName(db *gorm.DB, user common.UserRel, name string) error {
+	obj, err := GetCatchObj(db, user)
 	if err != nil {
 		return err
 	}
@@ -54,11 +53,11 @@ func UpdateNickName(user common.UserRel, name string) error {
 		return ErrCatchObjNotFound
 	}
 	obj.Name = name
-	return vars.DBInstance.Save(&obj).Error
+	return db.Save(&obj).Error
 }
 
-func UpdateEmoji(user common.UserRel, emoji string) error {
-	obj, err := GetCatchObj(user)
+func UpdateEmoji(db *gorm.DB, user common.UserRel, emoji string) error {
+	obj, err := GetCatchObj(db, user)
 	if err != nil {
 		return err
 	}
@@ -66,5 +65,5 @@ func UpdateEmoji(user common.UserRel, emoji string) error {
 		return ErrCatchObjNotFound
 	}
 	obj.Emoji = emoji
-	return vars.DBInstance.Save(&obj).Error
+	return db.Save(&obj).Error
 }
