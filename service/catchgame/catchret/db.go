@@ -41,3 +41,15 @@ func GiveCatchNum(db *gorm.DB, user common.UserRel, objId int64, num int64) erro
 		return tx.Save(&result).Error
 	})
 }
+
+func GetMyCatch(db *gorm.DB, user common.UserRel) ([]CatchResult, error) {
+	var results []CatchResult
+	err := db.Where("chat_id = ? AND user_id = ?", user.ChatId, user.UserId).Find(&results).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return []CatchResult{}, nil
+		}
+		return nil, err
+	}
+	return results, nil
+}

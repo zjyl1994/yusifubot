@@ -61,7 +61,7 @@ func commandDispatcher(msg *tgbotapi.Message) error {
 	case "catchme":
 		return action.CatchMeHandler(msg)
 	case "mycatch":
-
+		return action.GetMyCatchHandler(msg)
 	case "rankcatch":
 
 	case "setnickname":
