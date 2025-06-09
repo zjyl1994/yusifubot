@@ -29,23 +29,28 @@ func GetStaminPoint(db *gorm.DB, user common.UserRel) (*Stamina, error) {
 func UseStaminPoint(db *gorm.DB, user common.UserRel, cost int64) (*Stamina, error) {
 	spLock.Lock(user)
 	defer spLock.Unlock(user)
+	
+	var sp *Stamina
+	err := db.Transaction(func(tx *gorm.DB) error {
+		var err error
+		sp, err = GetStaminPoint(tx, user)
+		if err != nil {
+			return err
+		}
+		// 计算并扣减能量
+		current := sp.Current()
+		remainEnergy := current - cost
+		// 检查是否扣完
+		if remainEnergy < 0 {
+			return utils.NewBizErrWithBase(fmt.Sprintf("体力不足%d,%s", cost, sp.String()), ErrNotEnough)
+		}
+		// 新体力写入DB
+		sp.LastSP = remainEnergy
+		sp.LastTick = time.Now().Unix()
 
-	sp, err := GetStaminPoint(db, user)
-	if err != nil {
-		return nil, err
-	}
-	// 计算并扣减能量
-	current := sp.Current()
-	remainEnergy := current - cost
-	// 检查是否扣完
-	if remainEnergy < 0 {
-		return sp, utils.NewBizErrWithBase(fmt.Sprintf("体力不足%d,%s", cost, sp.String()), ErrNotEnough)
-	}
-	// 新体力写入DB
-	sp.LastSP = remainEnergy
-	sp.LastTick = time.Now().Unix()
-
-	err = db.Save(sp).Error
+		return tx.Save(sp).Error
+	})
+	
 	if err != nil {
 		return nil, err
 	}
@@ -55,14 +60,16 @@ func UseStaminPoint(db *gorm.DB, user common.UserRel, cost int64) (*Stamina, err
 func AddStaminPoint(db *gorm.DB, user common.UserRel, amount int64) error {
 	spLock.Lock(user)
 	defer spLock.Unlock(user)
+	
+	return db.Transaction(func(tx *gorm.DB) error {
+		sp, err := GetStaminPoint(tx, user)
+		if err != nil {
+			return err
+		}
 
-	sp, err := GetStaminPoint(db, user)
-	if err != nil {
-		return err
-	}
+		sp.LastSP = sp.Current() + amount
+		sp.LastTick = time.Now().Unix()
 
-	sp.LastSP = sp.Current() + amount
-	sp.LastTick = time.Now().Unix()
-
-	return db.Save(sp).Error
+		return tx.Save(sp).Error
+	})
 }
