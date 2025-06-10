@@ -42,6 +42,15 @@ func BatchGetCatchObj(db *gorm.DB, chatId int64, userIds []int64) ([]CatchObj, e
 	return objs, nil
 }
 
+func ListEnabledCatchObj(db *gorm.DB, chatId int64) ([]CatchObj, error) {
+	var objs []CatchObj
+	err := db.Where("chat_id = ? AND enabled = ?", chatId, true).Find(&objs).Error
+	if err != nil {
+		return nil, err
+	}
+	return objs, nil
+}
+
 func CreateCatchObj(db *gorm.DB, user common.UserRel, name, emoji string) error {
 	obj := CatchObj{
 		ChatId:  user.ChatId,
