@@ -53,3 +53,24 @@ func GetMyCatch(db *gorm.DB, user common.UserRel) ([]CatchResult, error) {
 	}
 	return results, nil
 }
+
+func RankCatch(db *gorm.DB, chatId, objId int64) ([]CatchRankItem, error) {
+	var results []CatchRankItem
+	query := db.Model(&CatchResult{}).
+		Select("user_id, SUM(num) as num").
+		Where("chat_id = ?", chatId)
+
+	if objId != 0 {
+		query = query.Where("obj_id =?", objId)
+	}
+	
+	err := query.
+		Group("user_id").
+		Order("num DESC").
+		Limit(10).
+		Find(&results).Error
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}

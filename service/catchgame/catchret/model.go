@@ -7,3 +7,8 @@ type CatchResult struct {
 	ObjId  int64 `gorm:"uniqueIndex:idx_chat_user_obj;column:obj_id"`
 	Num    int64
 }
+
+type CatchRankItem struct{
+	UserId int64
+	Num int64
+}

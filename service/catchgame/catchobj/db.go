@@ -33,7 +33,7 @@ func GetCatchObj(db *gorm.DB, user common.UserRel) (*CatchObj, error) {
 	return &obj, nil
 }
 
-func BatchGetCatchObj(db *gorm.DB,chatId int64, userIds []int64) ([]CatchObj, error) {
+func BatchGetCatchObj(db *gorm.DB, chatId int64, userIds []int64) ([]CatchObj, error) {
 	var objs []CatchObj
 	err := db.Where("chat_id = ? AND user_id IN ?", chatId, userIds).Find(&objs).Error
 	if err != nil {

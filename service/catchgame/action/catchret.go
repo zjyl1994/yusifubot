@@ -11,6 +11,7 @@ import (
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
+	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
 func GetMyCatchHandler(msg *tgbotapi.Message) error {
@@ -58,6 +59,41 @@ func GetMyCatchHandler(msg *tgbotapi.Message) error {
 			name = strconv.FormatInt(v.ObjId, 10)
 		}
 		sb.WriteString(fmt.Sprintf("%s %d只\n\n", name, v.Num))
+	}
+	return utils.ReplyTextToTelegram(msg, sb.String(), true)
+}
+
+func RankCatchHandler(msg *tgbotapi.Message) error {
+	var objId int64
+	if msg.ReplyToMessage != nil {
+		objId = msg.ReplyToMessage.From.ID
+	}
+	items, err := catchret.RankCatch(vars.DBInstance, msg.Chat.ID, objId)
+	if err != nil {
+		return err
+	}
+	if len(items) == 0 {
+		return utils.ReplyTextToTelegram(msg, "现在还没有人捉到", false)
+	}
+	var sb strings.Builder
+	if objId != 0 {
+		obj, err := catchobj.GetCatchObj(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: objId})
+		if err != nil {
+			return err
+		}
+		if obj == nil {
+			return utils.ReplyTextToTelegram(msg, "还不能抓ta", false)
+		}
+		sb.WriteString(fmt.Sprintf("**%s 捕捉排行榜**\n\n", obj.Name))
+	} else {
+		sb.WriteString("**🏆综合捕捉排行榜**\n\n")
+	}
+	for idx, v := range items {
+		name, err := tg.GetUserName(v.UserId)
+		if err != nil {
+			return err
+		}
+		sb.WriteString(fmt.Sprintf("%d. %s %d只\n\n", idx+1, name, v.Num))
 	}
 	return utils.ReplyTextToTelegram(msg, sb.String(), true)
 }
