@@ -8,7 +8,10 @@ import (
 	"github.com/zjyl1994/yusifubot/infra/vars"
 )
 
-const PARSE_MODE_MARKDOWN = "MarkdownV2"
+const (
+	PARSE_MODE_MARKDOWN = "MarkdownV2"
+	PARSE_MODE_HTML     = "HTML"
+)
 
 func ReplyTextToTelegram(input *tgbotapi.Message, text string, markdown bool) error {
 	if !markdown {
@@ -19,6 +22,14 @@ func ReplyTextToTelegram(input *tgbotapi.Message, text string, markdown bool) er
 	if markdown {
 		msg.ParseMode = PARSE_MODE_MARKDOWN
 	}
+	_, err := vars.BotInstance.Send(msg)
+	return err
+}
+
+func ReplyHTMLToTelegram(input *tgbotapi.Message, htmlText string) error {
+	msg := tgbotapi.NewMessage(input.Chat.ID, htmlText)
+	msg.ReplyToMessageID = input.MessageID
+	msg.ParseMode = PARSE_MODE_HTML
 	_, err := vars.BotInstance.Send(msg)
 	return err
 }

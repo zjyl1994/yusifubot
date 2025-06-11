@@ -86,10 +86,10 @@ func CatchHandler(msg *tgbotapi.Message) (err error) {
 		}
 	}
 	var sb strings.Builder
-	sb.WriteString("捕捉结果\n\n")
+	sb.WriteString("<b>捕捉结果</b>\n")
 	sb.WriteString(emojiResult)
-	sb.WriteString("\n\n成功率：")
-	sb.WriteString(fmt.Sprintf("%.2f%%\n\n\n\n", float64(successCtr)/float64(catchNum)*100))
+	sb.WriteString("<blockquote expandable>")
+	sb.WriteString(fmt.Sprintf("成功率： %.2f%%\n\n", float64(successCtr)/float64(catchNum)*100))
 	for _, obj := range catchResult {
 		err = catchret.GiveCatchNum(vars.DBInstance, user, obj.ID, catchCount[obj])
 		if err != nil {
@@ -98,8 +98,8 @@ func CatchHandler(msg *tgbotapi.Message) (err error) {
 		sb.WriteString(obj.Name)
 		sb.WriteString(" ")
 		sb.WriteString(strconv.FormatInt(catchCount[obj], 10))
-		sb.WriteString("只\n\n")
+		sb.WriteString("只\n")
 	}
-
-	return utils.ReplyTextToTelegram(msg, sb.String(), true)
+	sb.WriteString("</blockquote>")
+	return utils.ReplyHTMLToTelegram(msg, sb.String())
 }
