@@ -54,6 +54,9 @@ func CatchHandler(msg *tgbotapi.Message) (err error) {
 			return err
 		}
 		catchNum = sp.Current() / CATCH_STAMINA_COST
+		if catchNum <= 0 {
+			return utils.ReplyTextToTelegram(msg, "体力不足，"+sp.String(), false)
+		}
 	}
 	// 消耗体力
 	_, err = stamina.UseStaminPoint(vars.DBInstance, user, catchNum*CATCH_STAMINA_COST)
@@ -61,11 +64,11 @@ func CatchHandler(msg *tgbotapi.Message) (err error) {
 		return err
 	}
 	// 捕捉
-	catchResult := make([]catchobj.CatchObj, len(catchObjList))
+	catchResult := make([]catchobj.CatchObj, catchNum)
 	catchCount := make(map[catchobj.CatchObj]int64)
 	var successCtr int64
 	var emojiResult string
-	for i := 0; i < len(catchObjList); i++ {
+	for i := range catchNum { // 多轮捕捉
 		// 选择捕捉对象
 		choiceObj := catchObjList[rand.IntN(len(catchObjList))]
 		// 计算是否成功
