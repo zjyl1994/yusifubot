@@ -16,6 +16,7 @@ import (
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/server/bot"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
+	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
 	"github.com/zjyl1994/yusifubot/service/tg"
 	"gorm.io/gorm"
@@ -53,8 +54,7 @@ func Start() (err error) {
 	if err != nil {
 		return err
 	}
-	err = vars.DBInstance.AutoMigrate(&tg.Chat{}, &tg.User{}, &stamina.Stamina{},
-		&catchobj.CatchObj{})
+	err = vars.DBInstance.AutoMigrate(&tg.Chat{}, &tg.User{}, &stamina.Stamina{}, &catchobj.CatchObj{}, &catchret.CatchResult{})
 	if err != nil {
 		return err
 	}

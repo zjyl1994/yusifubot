@@ -26,7 +26,7 @@ func GetCatchObj(db *gorm.DB, user common.UserRel) (*CatchObj, error) {
 	err := db.Where(CatchObj{ChatId: user.ChatId, UserId: user.UserId}).First(&obj).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, err
+			return nil, nil
 		}
 		return nil, err
 	}
