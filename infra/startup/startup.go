@@ -1,7 +1,9 @@
 package startup
 
 import (
+	crand "crypto/rand"
 	"errors"
+	"math/rand/v2"
 	"os"
 	"os/signal"
 	"strconv"
@@ -37,6 +39,14 @@ func Start() (err error) {
 		return errors.New("YUSIFUBOT_BOT_TOKEN is not set")
 	}
 	vars.AdminUserId = os.Getenv("YUSIFUBOT_ADMIN_USER_ID")
+
+	// 初始化独立随机数器
+	var randSeed [32]byte
+	_, err = crand.Read(randSeed[:])
+	if err != nil {
+		return err
+	}
+	vars.RNG = rand.NewChaCha8(randSeed)
 
 	// 初始化数据库
 	vars.DBInstance, err = gorm.Open(sqlite.Open(vars.DatabasePath), &gorm.Config{

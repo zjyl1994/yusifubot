@@ -65,16 +65,21 @@ func CatchHandler(msg *tgbotapi.Message) (err error) {
 		return err
 	}
 	// 捕捉
-	currentThreshold := rand.Float64() // 本次捕捉门槛
 	catchResult := make([]*catchobj.CatchObj, catchNum)
 	catchCount := make(map[catchobj.CatchObj]int64)
+	randResult := make([]byte, catchNum)
+	_, err = vars.RNG.Read(randResult)
+	if err != nil {
+		return err
+	}
+
 	var successCtr int64
 	var emojiResult string
 	for i := range catchNum { // 多轮捕捉
 		// 选择捕捉对象
-		choiceObj := catchObjList[rand.IntN(len(catchObjList))]
+		choiceObj := catchObjList[rand.N(len(catchObjList))]
 		// 计算是否成功
-		success := rand.Float64() > currentThreshold
+		success := randResult[i] > 128
 		// 记录成功内容
 		if success {
 			catchResult[i] = &choiceObj
@@ -100,11 +105,6 @@ func CatchHandler(msg *tgbotapi.Message) (err error) {
 	} else {
 		sb.WriteString("<blockquote expandable>")
 		succRate := float64(successCtr) / float64(catchNum)
-		if succRate > (1 - currentThreshold) {
-			sb.WriteString("幸运女神垂青于你,决定赐予你更多，")
-		} else {
-			sb.WriteString("幸运女神无视了你的祈祷，你只能得到这些，")
-		}
 		sb.WriteString(fmt.Sprintf("成功率： %.2f%%\n\n", succRate*100))
 		for obj, num := range catchCount {
 			err = catchret.GiveCatchNum(vars.DBInstance, user, obj.UserId, num)
