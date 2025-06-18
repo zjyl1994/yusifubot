@@ -13,7 +13,10 @@ import (
 func ReplyTextToTelegram(input *models.Message, text string, markdown bool) error {
 	var msgParams bot.SendMessageParams
 	msgParams.Text = text
-	msgParams.ReplyParameters.MessageID = input.ID
+	msgParams.ReplyParameters = &models.ReplyParameters{
+		MessageID: input.ID,
+		ChatID:    input.Chat.ID,
+	}
 	if markdown {
 		msgParams.ParseMode = models.ParseModeMarkdown
 	} else {

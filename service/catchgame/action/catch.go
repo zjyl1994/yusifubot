@@ -123,7 +123,10 @@ func CatchHandler(msg *models.Message) (err error) {
 	// 回复给玩家消息
 	var msgParams bot.SendMessageParams
 	msgParams.Text = sb.String()
-	msgParams.ReplyParameters.MessageID = msg.ID
+	msgParams.ReplyParameters = &models.ReplyParameters{
+		MessageID: msg.ID,
+		ChatID:    msg.Chat.ID,
+	}
 	msgParams.ParseMode = models.ParseModeHTML
 	msgParams.MessageEffectID = "5046509860389126442"
 	_, err = vars.BotInstance.SendMessage(context.Background(), &msgParams)
