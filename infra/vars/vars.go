@@ -3,7 +3,7 @@ package vars
 import (
 	"math/rand/v2"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbot "github.com/go-telegram/bot"
 	"gorm.io/gorm"
 )
 
@@ -12,7 +12,7 @@ var (
 	ListenAddr string
 
 	BotToken    string
-	BotInstance *tgbotapi.BotAPI
+	BotInstance *tgbot.Bot
 
 	DatabasePath string
 	DBInstance   *gorm.DB

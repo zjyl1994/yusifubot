@@ -1,44 +1,25 @@
 package utils
 
 import (
+	"context"
 	"strings"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 	"github.com/vinta/pangu"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 )
 
-const (
-	PARSE_MODE_MARKDOWN = "MarkdownV2"
-	PARSE_MODE_HTML     = "HTML"
-)
-
-func ReplyTextToTelegram(input *tgbotapi.Message, text string, markdown bool) error {
-	if !markdown {
-		text = pangu.SpacingText(text)
-	}
-	msg := tgbotapi.NewMessage(input.Chat.ID, text)
-	msg.ReplyToMessageID = input.MessageID
+func ReplyTextToTelegram(input *models.Message, text string, markdown bool) error {
+	var msgParams bot.SendMessageParams
+	msgParams.Text = text
+	msgParams.ReplyParameters.MessageID = input.ID
 	if markdown {
-		msg.ParseMode = PARSE_MODE_MARKDOWN
+		msgParams.ParseMode = models.ParseModeMarkdown
+	} else {
+		msgParams.Text = pangu.SpacingText(msgParams.Text)
 	}
-	_, err := vars.BotInstance.Send(msg)
-	return err
-}
-
-func ReplyHTMLToTelegram(input *tgbotapi.Message, htmlText string) error {
-	msg := tgbotapi.NewMessage(input.Chat.ID, htmlText)
-	msg.ReplyToMessageID = input.MessageID
-	msg.ParseMode = PARSE_MODE_HTML
-	_, err := vars.BotInstance.Send(msg)
-	return err
-}
-
-func ReplyStickerToTelegram(input *tgbotapi.Message, stickerId string) error {
-	sticker := tgbotapi.FileID(stickerId)
-	msg := tgbotapi.NewSticker(input.Chat.ID, sticker)
-	msg.ReplyToMessageID = input.MessageID
-	_, err := vars.BotInstance.Send(msg)
+	_, err := vars.BotInstance.SendMessage(context.Background(), &msgParams)
 	return err
 }
 
@@ -64,4 +45,48 @@ func init() {
 	for _, r := range MARKDOWN_ESCAPE_CHARS {
 		MARKDOWN_ESCAPE_MAP[r] = struct{}{}
 	}
+}
+
+func ParseCommand(text string) string {
+	// 如果输入为空则返回空
+	if text == "" {
+		return ""
+	}
+
+	// 分割文本为单词数组
+	parts := strings.Fields(text)
+	if len(parts) == 0 {
+		return ""
+	}
+
+	// 获取命令（去除可能的@机器人名称）
+	command := parts[0]
+	if strings.Contains(command, "@") {
+		command = strings.Split(command, "@")[0]
+	}
+	// 去除命令前的/
+	command = strings.TrimPrefix(command, "/")
+
+	return command
+}
+
+func ParseCommandArguments(text string) []string {
+	// 如果输入为空则返回空切片
+	if text == "" {
+		return []string{}
+	}
+
+	// 分割文本为单词数组
+	parts := strings.Fields(text)
+	if len(parts) == 0 {
+		return []string{}
+	}
+
+	// 如果只有命令没有参数，返回空切片
+	if len(parts) == 1 {
+		return []string{}
+	}
+
+	// 返回命令后的所有参数
+	return parts[1:]
 }

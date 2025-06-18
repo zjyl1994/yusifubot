@@ -1,7 +1,7 @@
 package action
 
 import (
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/go-telegram/bot/models"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
@@ -12,7 +12,7 @@ import (
 )
 
 // 切换可抓状态
-func CatchMeHandler(msg *tgbotapi.Message) error {
+func CatchMeHandler(msg *models.Message) error {
 	current, err := catchobj.ToggleCatch(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID})
 	if err != nil {
 		if err == catchobj.ErrCatchObjNotFound {
@@ -34,8 +34,12 @@ func CatchMeHandler(msg *tgbotapi.Message) error {
 }
 
 // 设置昵称
-func SetMyNicknameHandler(msg *tgbotapi.Message) error {
-	arg := msg.CommandArguments()
+func SetMyNicknameHandler(msg *models.Message) error {
+	args := utils.ParseCommandArguments(msg.Text)
+	if len(args) == 0 {
+		return utils.ReplyTextToTelegram(msg, "请在命令后追加要设置的新昵称", false)
+	}
+	arg := args[0]
 	err := catchobj.UpdateNickName(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, arg)
 	if err == catchobj.ErrCatchObjNotFound {
 		err = createCatchObj(msg, arg, "")
@@ -47,8 +51,12 @@ func SetMyNicknameHandler(msg *tgbotapi.Message) error {
 }
 
 // 设置emoji
-func SetMyEmojiHandler(msg *tgbotapi.Message) error {
-	arg := msg.CommandArguments()
+func SetMyEmojiHandler(msg *models.Message) error {
+	args := utils.ParseCommandArguments(msg.Text)
+	if len(args) == 0 {
+		return utils.ReplyTextToTelegram(msg, "请在命令后追加要设置的新Emoji", false)
+	}
+	arg := args[0]
 	if !isSingleEmoji(arg) {
 		return utils.ReplyTextToTelegram(msg, "只能用一个emoji哦", false)
 	}
@@ -63,7 +71,7 @@ func SetMyEmojiHandler(msg *tgbotapi.Message) error {
 }
 
 // 静默创建可抓账号
-func createCatchObj(msg *tgbotapi.Message, nickName, emoji string) error {
+func createCatchObj(msg *models.Message, nickName, emoji string) error {
 	if nickName == "" {
 		nickName = tg.GetTgUserName(msg.From)
 	}

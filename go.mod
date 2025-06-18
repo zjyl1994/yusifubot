@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/glebarez/sqlite v1.11.0
-	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	github.com/go-telegram/bot v1.15.0
 	github.com/joho/godotenv v1.5.1
 	github.com/onrik/gorm-logrus v0.5.0
 	github.com/sirupsen/logrus v1.9.3

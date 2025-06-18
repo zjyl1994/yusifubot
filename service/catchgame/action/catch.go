@@ -1,12 +1,14 @@
 package action
 
 import (
+	"context"
 	"fmt"
 	"math/rand/v2"
 	"strconv"
 	"strings"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
@@ -16,7 +18,7 @@ import (
 	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
-func CatchHandler(msg *tgbotapi.Message) (err error) {
+func CatchHandler(msg *models.Message) (err error) {
 	user := common.UserRel{
 		ChatId: msg.Chat.ID,
 		UserId: msg.From.ID,
@@ -42,7 +44,7 @@ func CatchHandler(msg *tgbotapi.Message) (err error) {
 	}
 	// 计算捕捉数量
 	var catchNum int64
-	switch msg.Command() {
+	switch utils.ParseCommand(msg.Text) {
 	case "catch":
 		catchNum = 1
 	case "catch5":
@@ -118,5 +120,12 @@ func CatchHandler(msg *tgbotapi.Message) (err error) {
 		}
 		sb.WriteString("</blockquote>")
 	}
-	return utils.ReplyHTMLToTelegram(msg, sb.String())
+	// 回复给玩家消息
+	var msgParams bot.SendMessageParams
+	msgParams.Text = sb.String()
+	msgParams.ReplyParameters.MessageID = msg.ID
+	msgParams.ParseMode = models.ParseModeHTML
+	msgParams.MessageEffectID = "5046509860389126442"
+	_, err = vars.BotInstance.SendMessage(context.Background(), &msgParams)
+	return err
 }

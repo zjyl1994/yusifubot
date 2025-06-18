@@ -1,6 +1,7 @@
 package startup
 
 import (
+	"context"
 	crand "crypto/rand"
 	"errors"
 	"math/rand/v2"
@@ -10,7 +11,7 @@ import (
 	"syscall"
 
 	"github.com/glebarez/sqlite"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	tgbot "github.com/go-telegram/bot"
 	_ "github.com/joho/godotenv/autoload"
 	gorm_logrus "github.com/onrik/gorm-logrus"
 	"github.com/sirupsen/logrus"
@@ -69,13 +70,17 @@ func Start() (err error) {
 		return err
 	}
 	// 启动bot实例
-	vars.BotInstance, err = tgbotapi.NewBotAPI(vars.BotToken)
+	botOpts := []tgbot.Option{
+		tgbot.WithDefaultHandler(bot.Handler),
+	}
+	vars.BotInstance, err = tgbot.New(vars.BotToken, botOpts...)
 	if err != nil {
 		return err
 	}
-	vars.BotInstance.Debug = vars.DebugMode
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	// 启动 bot
-	go bot.Start()
+	go vars.BotInstance.Start(ctx)
 	// 响应 ctrl+c
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)

@@ -1,57 +1,45 @@
 package bot
 
 import (
+	"context"
 	"strings"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/go-telegram/bot"
+	"github.com/go-telegram/bot/models"
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
-	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/action"
 	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
-func Start() {
-	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+func Handler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message == nil {
+		return
+	}
 
-	updates := vars.BotInstance.GetUpdatesChan(u)
+	if update.Message.From.IsBot {
+		return
+	}
 
-	logrus.Infoln("Bot started")
+	if err := tg.UpdateChatAndUserName(update.Message); err != nil {
+		logrus.Warningln("Update chat and user name failed", err.Error())
+	}
 
-	for update := range updates {
-		if update.Message == nil {
-			continue
+	err := commandDispatcher(update.Message)
+	if err != nil {
+		errMsg := "发生错误，请联系管理员"
+		if bizErr, ok := err.(utils.BizErr); ok {
+			errMsg = bizErr.GetBizMsg()
+		} else {
+			logrus.Errorln(err)
 		}
-
-		if !update.Message.IsCommand() {
-			continue
-		}
-
-		if update.Message.From.IsBot {
-			continue
-		}
-
-		err := commandDispatcher(update.Message)
-		if err != nil {
-			errMsg := "发生错误，请联系管理员"
-			if bizErr, ok := err.(utils.BizErr); ok {
-				errMsg = bizErr.GetBizMsg()
-			} else {
-				logrus.Errorln(err)
-			}
-			utils.ReplyTextToTelegram(update.Message, errMsg, false)
-		}
+		utils.ReplyTextToTelegram(update.Message, errMsg, false)
 	}
 }
 
-func commandDispatcher(msg *tgbotapi.Message) error {
-	command := msg.Command()
-	args := strings.Fields(msg.CommandArguments())
-	logrus.Debugln("Received", command, args)
-	if err := tg.UpdateChatAndUserName(msg); err != nil {
-		logrus.Warningln("Update chat and user name failed", err.Error())
-	}
+func commandDispatcher(msg *models.Message) error {
+	command := utils.ParseCommand(msg.Text)
+	logrus.Debugln("Received", command, utils.ParseCommandArguments(msg.Text))
 	// 在此分发命令
 	switch strings.ToLower(command) {
 	case "start":

@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/go-telegram/bot/models"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
@@ -14,7 +14,7 @@ import (
 	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
-func GetMyCatchHandler(msg *tgbotapi.Message) error {
+func GetMyCatchHandler(msg *models.Message) error {
 	user := common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}
 	result, err := catchret.GetMyCatch(vars.DBInstance, user)
 	if err != nil {
@@ -63,7 +63,7 @@ func GetMyCatchHandler(msg *tgbotapi.Message) error {
 	return utils.ReplyTextToTelegram(msg, sb.String(), true)
 }
 
-func RankCatchHandler(msg *tgbotapi.Message) error {
+func RankCatchHandler(msg *models.Message) error {
 	var objId int64
 	if msg.ReplyToMessage != nil {
 		objId = msg.ReplyToMessage.From.ID
