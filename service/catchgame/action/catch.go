@@ -42,6 +42,9 @@ func CatchHandler(msg *models.Message) (err error) {
 			return err
 		}
 	}
+	if len(catchObjList) == 0 {
+		return utils.ReplyTextToTelegram(msg, "没有人可以捕捉哦", false)
+	}
 	// 计算捕捉数量
 	var catchNum int64
 	switch utils.ParseCommand(msg.Text) {
@@ -123,12 +126,11 @@ func CatchHandler(msg *models.Message) (err error) {
 	// 回复给玩家消息
 	var msgParams bot.SendMessageParams
 	msgParams.Text = sb.String()
+	msgParams.ChatID = msg.Chat.ID
 	msgParams.ReplyParameters = &models.ReplyParameters{
 		MessageID: msg.ID,
-		ChatID:    msg.Chat.ID,
 	}
 	msgParams.ParseMode = models.ParseModeHTML
-	msgParams.MessageEffectID = "5046509860389126442"
 	_, err = vars.BotInstance.SendMessage(context.Background(), &msgParams)
 	return err
 }
