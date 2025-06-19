@@ -1,14 +1,15 @@
 package action
 
 import (
+	"unicode/utf8"
+
 	"github.com/go-telegram/bot/models"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"github.com/zjyl1994/yusifubot/service/tg"
-
-	"regexp"
+	"golang.org/x/text/unicode/norm"
 )
 
 // 切换可抓状态
@@ -20,7 +21,7 @@ func CatchMeHandler(msg *models.Message) error {
 			if err != nil {
 				return err
 			}
-			return utils.ReplyTextToTelegram(msg, "成功开启捕捉自己功能\n\n可以使用setnickname自定义昵称\n\n可以使用setemoji自定义emoji", true)
+			return utils.ReplyTextToTelegram(msg, "成功开启捕捉自己功能\n\n可以使用setmyname自定义昵称\n\n可以使用setmyemoji自定义emoji", true)
 		}
 		return err
 	}
@@ -81,10 +82,34 @@ func createCatchObj(msg *models.Message, nickName, emoji string) error {
 	return catchobj.CreateCatchObj(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, nickName, emoji)
 }
 
-// 判断字符串是否是一个单一的 Emoji
+// 判断一个rune是否为emoji
+func isEmoji(r rune) bool {
+	switch {
+	case r >= 0x1F600 && r <= 0x1F64F, // Emoticons
+		r >= 0x1F300 && r <= 0x1F5FF, // Miscellaneous Symbols and Pictographs
+		r >= 0x1F680 && r <= 0x1F6FF, // Transport and Map Symbols
+		r >= 0x2600 && r <= 0x26FF,   // Misc symbols
+		r >= 0x2700 && r <= 0x27BF,   // Dingbats
+		r >= 0xFE00 && r <= 0xFE0F,   // Variation Selectors
+		r >= 0x1F900 && r <= 0x1F9FF, // Supplemental Symbols and Pictographs
+		r >= 0x1F1E6 && r <= 0x1F1FF: // Flags (iOS)
+		return true
+	default:
+		return false
+	}
+}
+
+// 判断字符串是否只有一个emoji
 func isSingleEmoji(s string) bool {
-	// 正则表达式匹配一个完整的 Emoji（包括复合 Emoji）
-	// 来源：简化版 emoji 正则，适用于常见场景
-	re := regexp.MustCompile(`^([\p{Emoji}\p{Emoticons}][\uFE00-\uFE0F]?|[\p{Emoji}\p{Emoticons}]\u200D[\p{Emoji}\p{Emoticons}])+$`)
-	return re.MatchString(s)
+	normalized := norm.NFC.String(s) // Normalize the string to ensure consistent comparison
+	count := 0
+	for len(normalized) > 0 {
+		r, size := utf8.DecodeRuneInString(normalized)
+		if !isEmoji(r) {
+			return false
+		}
+		count++
+		normalized = normalized[size:]
+	}
+	return count == 1
 }

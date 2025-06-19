@@ -14,6 +14,7 @@ func ReplyTextToTelegram(input *models.Message, text string, markdown bool) erro
 	var msgParams bot.SendMessageParams
 	msgParams.Text = text
 	msgParams.ChatID = input.Chat.ID
+	msgParams.DisableNotification = true
 	msgParams.ReplyParameters = &models.ReplyParameters{
 		MessageID: input.ID,
 	}

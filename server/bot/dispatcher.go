@@ -52,9 +52,9 @@ func commandDispatcher(msg *models.Message) error {
 		return action.GetMyCatchHandler(msg)
 	case "rankcatch":
 		return action.RankCatchHandler(msg)
-	case "setnickname":
+	case "setmyname":
 		return action.SetMyNicknameHandler(msg)
-	case "setemoji":
+	case "setmyemoji":
 		return action.SetMyEmojiHandler(msg)
 	}
 	return nil

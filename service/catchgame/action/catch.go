@@ -130,6 +130,7 @@ func CatchHandler(msg *models.Message) (err error) {
 	msgParams.ReplyParameters = &models.ReplyParameters{
 		MessageID: msg.ID,
 	}
+	msgParams.DisableNotification = true
 	msgParams.ParseMode = models.ParseModeHTML
 	_, err = vars.BotInstance.SendMessage(context.Background(), &msgParams)
 	return err
