@@ -122,7 +122,7 @@ func CatchHandler(msg *models.Message) (err error) {
 	}
 	// 生成AI判词
 	var aiJudgment string
-	if aiEnabled {
+	if successCtr > 0 && aiEnabled {
 		const (
 			SYSTEM_PROMPT         = "群中正在进行一场捕捉游戏，你作为一位旁观者对捕捉结果进行简单评论。评价结果请用中文回复。"
 			MAX_COMPLETION_TOKENS = 256

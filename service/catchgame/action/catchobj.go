@@ -1,12 +1,14 @@
 package action
 
 import (
+	"strconv"
 	"unicode/utf8"
 
 	"github.com/go-telegram/bot/models"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
+	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"github.com/zjyl1994/yusifubot/service/tg"
 	"golang.org/x/text/unicode/norm"
@@ -17,6 +19,23 @@ func CatchMeHandler(msg *models.Message) error {
 	// 只在群聊中生效
 	if !utils.IsGroup(msg) {
 		return nil
+	}
+
+	if msg.ReplyToMessage != nil { // 送自己给某人
+		sendUser := msg.ReplyToMessage.From
+		args := utils.ParseCommandArguments(msg.Text)
+		if len(args) == 0 {
+			return utils.ReplyTextToTelegram(msg, "请在命令后追加要赠送的数量", false)
+		}
+		num, err := strconv.Atoi(args[0])
+		if err != nil {
+			return utils.ReplyTextToTelegram(msg, "请在命令后追加要赠送的数量", false)
+		}
+		err = catchret.GiveCatchNum(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: sendUser.ID}, msg.From.ID, int64(num))
+		if err != nil {
+			return err
+		}
+		return utils.ReplyTextToTelegram(msg, "成功赠送"+strconv.Itoa(num)+"只", false)
 	}
 
 	current, err := catchobj.ToggleCatch(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID})
