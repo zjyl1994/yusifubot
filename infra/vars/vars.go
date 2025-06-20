@@ -14,10 +14,12 @@ var (
 	BotToken    string
 	BotInstance *tgbot.Bot
 
+	ReplicateToken string
+
 	DatabasePath string
 	DBInstance   *gorm.DB
 
-	AdminUserId string
+	AdminUserId int64
 
 	RNG *rand.ChaCha8
 )

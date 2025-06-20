@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/service/catchgame/action"
+	"github.com/zjyl1994/yusifubot/service/config"
 	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
@@ -44,6 +45,8 @@ func commandDispatcher(msg *models.Message) error {
 	switch strings.ToLower(command) {
 	case "start":
 		return utils.ReplyTextToTelegram(msg, "欢迎使用 YusifuBot", false)
+	case "config":
+		return config.Handler(msg)
 	case "catch", "catchall", "catch5", "catch10":
 		return action.CatchHandler(msg)
 	case "catchme":

@@ -15,6 +15,11 @@ import (
 )
 
 func GetMyCatchHandler(msg *models.Message) error {
+	// 只在群聊中生效
+	if !utils.IsGroup(msg) {
+		return nil
+	}
+
 	user := common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}
 	result, err := catchret.GetMyCatch(vars.DBInstance, user)
 	if err != nil {
@@ -64,6 +69,11 @@ func GetMyCatchHandler(msg *models.Message) error {
 }
 
 func RankCatchHandler(msg *models.Message) error {
+	// 只在群聊中生效
+	if !utils.IsGroup(msg) {
+		return nil
+	}
+
 	var objId int64
 	if msg.ReplyToMessage != nil {
 		objId = msg.ReplyToMessage.From.ID

@@ -94,3 +94,7 @@ func ParseCommandArguments(text string) []string {
 	// 返回命令后的所有参数
 	return parts[1:]
 }
+
+func IsGroup(msg *models.Message) bool {
+	return msg.Chat.Type == models.ChatTypeGroup || msg.Chat.Type == models.ChatTypeSupergroup
+}

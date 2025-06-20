@@ -6,19 +6,27 @@ import (
 	"math/rand/v2"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
+	"github.com/zjyl1994/yusifubot/service/config"
 	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
 func CatchHandler(msg *models.Message) (err error) {
+	// 只在群聊中生效
+	if !utils.IsGroup(msg) {
+		return nil
+	}
+
 	user := common.UserRel{
 		ChatId: msg.Chat.ID,
 		UserId: msg.From.ID,
@@ -100,6 +108,38 @@ func CatchHandler(msg *models.Message) (err error) {
 			emojiResult += CATCH_MISS_EMOJI
 		}
 	}
+	succRate := (float64(successCtr) / float64(catchNum)) * 100
+	// 生成捕捉结果
+	// 1. 判断对话内是否开启AI生成评判词
+	var aiEnabled bool
+	if val, err := config.Get(msg.Chat.ID, "ai"); err == nil {
+		aiEnabled, err = strconv.ParseBool(val)
+		if err != nil {
+			logrus.Errorf("catch game parse ai config failed: %v", err)
+		}
+	} else {
+		logrus.Errorf("catch game get ai config failed: %v", err)
+	}
+	// 生成AI判词
+	var aiJudgment string
+	if aiEnabled {
+		const (
+			SYSTEM_PROMPT         = "群中正在进行一场捕捉游戏，你作为一位旁观者对捕捉结果进行简单评论。评价结果请用中文回复。"
+			MAX_COMPLETION_TOKENS = 256
+			TEMPERATURE           = 1.1
+		)
+		prompt := fmt.Sprintf("玩家'%s'在本轮捕捉中成功率%.2f,战利品如下:\n", tg.GetTgUserName(msg.From), succRate)
+		for obj, num := range catchCount {
+			prompt += fmt.Sprintf("%s: %d只\n", obj.Name, num)
+		}
+		gptResp, err := utils.CallGPT41Nano(SYSTEM_PROMPT, prompt, TEMPERATURE, MAX_COMPLETION_TOKENS, 10*time.Second)
+		if err != nil {
+			logrus.Errorf("catch game replicate request failed: %v", err)
+		} else {
+			aiJudgment = gptResp
+		}
+	}
+
 	var sb strings.Builder
 	sb.WriteString("<b>捕捉结果</b>\n")
 	sb.WriteString(emojiResult)
@@ -109,8 +149,13 @@ func CatchHandler(msg *models.Message) (err error) {
 		sb.WriteString("两手空空不知所措")
 	} else {
 		sb.WriteString("<blockquote expandable>")
-		succRate := float64(successCtr) / float64(catchNum)
-		sb.WriteString(fmt.Sprintf("成功率： %.2f%%\n\n", succRate*100))
+		if aiEnabled && len(aiJudgment) > 0 {
+			sb.WriteString(aiJudgment)
+		} else {
+			succRate := float64(successCtr) / float64(catchNum)
+			sb.WriteString(fmt.Sprintf("成功率： %.2f%%\n", succRate*100))
+		}
+		sb.WriteString("\n本轮战利品：\n")
 		for obj, num := range catchCount {
 			err = catchret.GiveCatchNum(vars.DBInstance, user, obj.UserId, num)
 			if err != nil {

@@ -14,6 +14,11 @@ import (
 
 // 切换可抓状态
 func CatchMeHandler(msg *models.Message) error {
+	// 只在群聊中生效
+	if !utils.IsGroup(msg) {
+		return nil
+	}
+
 	current, err := catchobj.ToggleCatch(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID})
 	if err != nil {
 		if err == catchobj.ErrCatchObjNotFound {
@@ -36,6 +41,11 @@ func CatchMeHandler(msg *models.Message) error {
 
 // 设置昵称
 func SetMyNicknameHandler(msg *models.Message) error {
+	// 只在群聊中生效
+	if !utils.IsGroup(msg) {
+		return nil
+	}
+
 	args := utils.ParseCommandArguments(msg.Text)
 	if len(args) == 0 {
 		return utils.ReplyTextToTelegram(msg, "请在命令后追加要设置的新昵称", false)
@@ -53,6 +63,11 @@ func SetMyNicknameHandler(msg *models.Message) error {
 
 // 设置emoji
 func SetMyEmojiHandler(msg *models.Message) error {
+	// 只在群聊中生效
+	if !utils.IsGroup(msg) {
+		return nil
+	}
+
 	args := utils.ParseCommandArguments(msg.Text)
 	if len(args) == 0 {
 		return utils.ReplyTextToTelegram(msg, "请在命令后追加要设置的新Emoji", false)

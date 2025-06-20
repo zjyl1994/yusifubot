@@ -21,6 +21,7 @@ import (
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
+	"github.com/zjyl1994/yusifubot/service/config"
 	"github.com/zjyl1994/yusifubot/service/tg"
 	"gorm.io/gorm"
 )
@@ -39,7 +40,12 @@ func Start() (err error) {
 	if vars.BotToken == "" {
 		return errors.New("YUSIFUBOT_BOT_TOKEN is not set")
 	}
-	vars.AdminUserId = os.Getenv("YUSIFUBOT_ADMIN_USER_ID")
+	
+	vars.AdminUserId, err = strconv.ParseInt(os.Getenv("YUSIFUBOT_ADMIN_USER_ID"), 10, 64)
+	if err != nil {
+		return err
+	}
+	vars.ReplicateToken = os.Getenv("YUSIFUBOT_REPLICATE_TOKEN")
 
 	// 初始化独立随机数器
 	var randSeed [32]byte
@@ -51,7 +57,8 @@ func Start() (err error) {
 
 	// 初始化数据库
 	vars.DBInstance, err = gorm.Open(sqlite.Open(vars.DatabasePath), &gorm.Config{
-		Logger: gorm_logrus.New(),
+		Logger:         gorm_logrus.New(),
+		TranslateError: true,
 	})
 	if err != nil {
 		return err
@@ -65,7 +72,7 @@ func Start() (err error) {
 	if err != nil {
 		return err
 	}
-	err = vars.DBInstance.AutoMigrate(&tg.Chat{}, &tg.User{}, &stamina.Stamina{}, &catchobj.CatchObj{}, &catchret.CatchResult{})
+	err = vars.DBInstance.AutoMigrate(&tg.Chat{}, &tg.User{}, &stamina.Stamina{}, &catchobj.CatchObj{}, &catchret.CatchResult{}, &config.ChatConfig{})
 	if err != nil {
 		return err
 	}
