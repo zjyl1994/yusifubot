@@ -40,12 +40,13 @@ func Start() (err error) {
 	if vars.BotToken == "" {
 		return errors.New("YUSIFUBOT_BOT_TOKEN is not set")
 	}
-	
+
 	vars.AdminUserId, err = strconv.ParseInt(os.Getenv("YUSIFUBOT_ADMIN_USER_ID"), 10, 64)
 	if err != nil {
 		return err
 	}
 	vars.ReplicateToken = os.Getenv("YUSIFUBOT_REPLICATE_TOKEN")
+	vars.ReplicateCooldown = utils.NewCooldownManager()
 
 	// 初始化独立随机数器
 	var randSeed [32]byte

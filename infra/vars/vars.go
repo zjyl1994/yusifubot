@@ -14,7 +14,8 @@ var (
 	BotToken    string
 	BotInstance *tgbot.Bot
 
-	ReplicateToken string
+	ReplicateToken    string
+	ReplicateCooldown CooldownManager
 
 	DatabasePath string
 	DBInstance   *gorm.DB
