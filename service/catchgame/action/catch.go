@@ -137,7 +137,7 @@ func CatchHandler(msg *models.Message) (err error) {
 				Num:  catchCount[item],
 			})
 		}
-		gptResp, err := generateAIJudgement(data)
+		gptResp, err := generateAIJudgement(msg, data)
 		if err != nil {
 			logrus.Errorf("catch game replicate request failed: %v", err)
 		} else {
@@ -187,10 +187,10 @@ func CatchHandler(msg *models.Message) (err error) {
 	return err
 }
 
-func generateAIJudgement(input promptData) (string, error) {
+func generateAIJudgement(msg *models.Message, input promptData) (string, error) {
 	// 从配置中获取温度
 	var err error
-	val, err := config.Get(config.GLOBAL_CONFIG_CHAT_ID, config.CATCH_GAME_AI_TEMPERATURE)
+	val, err := config.Get(msg.Chat.ID, config.CATCH_GAME_AI_TEMPERATURE)
 	if err != nil {
 		return "", err
 	}
@@ -199,7 +199,7 @@ func generateAIJudgement(input promptData) (string, error) {
 		return "", err
 	}
 	// 从配置中获取最大token
-	val, err = config.Get(config.GLOBAL_CONFIG_CHAT_ID, config.CATCH_GAME_MAX_TOKEN)
+	val, err = config.Get(msg.Chat.ID, config.CATCH_GAME_MAX_TOKEN)
 	if err != nil {
 		return "", err
 	}
@@ -208,7 +208,7 @@ func generateAIJudgement(input promptData) (string, error) {
 		return "", err
 	}
 	// 从配置中获取prompt
-	systemPrompt, err := config.Get(config.GLOBAL_CONFIG_CHAT_ID, config.CATCH_GAME_PROMPT)
+	systemPrompt, err := config.Get(msg.Chat.ID, config.CATCH_GAME_PROMPT)
 	if err != nil {
 		return "", err
 	}

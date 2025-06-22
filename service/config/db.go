@@ -3,12 +3,16 @@ package config
 import (
 	"errors"
 
+	"github.com/samber/lo"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 func Get(chatId int64, name string) (string, error) {
+	if lo.Contains(GlobalConfigs, name) {
+		chatId = GLOBAL_CONFIG_CHAT_ID
+	}
 	var m ChatConfig
 	err := vars.DBInstance.Where("chat_id = ? AND config_key = ?", chatId, name).Find(&m).Error
 	if err != nil {
@@ -21,6 +25,9 @@ func Get(chatId int64, name string) (string, error) {
 }
 
 func Set(chatId int64, name, data string) error {
+	if lo.Contains(GlobalConfigs, name) {
+		chatId = GLOBAL_CONFIG_CHAT_ID
+	}
 	m := ChatConfig{
 		ChatId:     chatId,
 		ConfigKey:  name,

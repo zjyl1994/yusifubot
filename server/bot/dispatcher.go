@@ -48,9 +48,7 @@ func commandDispatcher(msg *models.Message) error {
 	case "debuginfo":
 		return tg.InfoHandler(msg)
 	case "config":
-		return config.Handler(false)(msg)
-	case "globalconfig":
-		return config.Handler(true)(msg)
+		return config.Handler(msg)
 	case "catch", "catchall", "catch5", "catch10":
 		return action.CatchHandler(msg)
 	case "catchme":

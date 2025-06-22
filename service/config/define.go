@@ -7,3 +7,9 @@ const (
 	CATCH_GAME_PROMPT         = "catch_prompt"
 	CATCH_GAME_MAX_TOKEN      = "catch_max_token"
 )
+
+var GlobalConfigs = []string{
+	CATCH_GAME_AI_TEMPERATURE,
+	CATCH_GAME_PROMPT,
+	CATCH_GAME_MAX_TOKEN,
+}

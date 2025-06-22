@@ -8,9 +8,10 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/joho/godotenv v1.5.1
 	github.com/onrik/gorm-logrus v0.5.0
+	github.com/samber/lo v1.51.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/vinta/pangu v3.0.0+incompatible
-	golang.org/x/text v0.14.0
+	golang.org/x/text v0.22.0
 	gorm.io/gorm v1.25.12
 )
 
