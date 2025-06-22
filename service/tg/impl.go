@@ -35,9 +35,10 @@ func GetTgChatName(msg *models.Chat) string {
 func InfoHandler(msg *models.Message) error {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("ChatId: %d\n", msg.Chat.ID))
-	sb.WriteString(fmt.Sprintf("UserId: %d\n", msg.From.ID))
 	if msg.ReplyToMessage != nil {
-		sb.WriteString(fmt.Sprintf("ReplyUserId: %d\n", msg.ReplyToMessage.From.ID))
+		sb.WriteString(fmt.Sprintf("UserId: %d\n", msg.ReplyToMessage.From.ID))
+	} else {
+		sb.WriteString(fmt.Sprintf("UserId: %d\n", msg.From.ID))
 	}
 	return utils.ReplyTextToTelegram(msg, sb.String(), false)
 }

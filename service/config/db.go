@@ -31,3 +31,14 @@ func Set(chatId int64, name, data string) error {
 		DoUpdates: clause.AssignmentColumns([]string{"config_data"}),
 	}).Create(&m).Error
 }
+
+func SetIfNotExist(chatId int64, name, data string) error {
+	oldData, err := Get(chatId, name)
+	if err != nil {
+		return err
+	}
+	if oldData != "" {
+		return nil
+	}
+	return Set(chatId, name, data)
+}

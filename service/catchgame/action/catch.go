@@ -2,11 +2,11 @@ package action
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand/v2"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -112,10 +112,12 @@ func CatchHandler(msg *models.Message) (err error) {
 	// 生成捕捉结果
 	// 1. 判断对话内是否开启AI生成评判词
 	var aiEnabled bool
-	if val, err := config.Get(msg.Chat.ID, "ai"); err == nil {
-		aiEnabled, err = strconv.ParseBool(val)
-		if err != nil {
-			logrus.Errorf("catch game parse ai config failed: %v", err)
+	if val, err := config.Get(msg.Chat.ID, config.CATCH_GAME_ENABLE_AI); err == nil {
+		if val != "" {
+			aiEnabled, err = strconv.ParseBool(val)
+			if err != nil {
+				logrus.Errorf("catch game parse ai config failed: %v", err)
+			}
 		}
 	} else {
 		logrus.Errorf("catch game get ai config failed: %v", err)
@@ -123,16 +125,19 @@ func CatchHandler(msg *models.Message) (err error) {
 	// 生成AI判词
 	var aiJudgment string
 	if successCtr > 0 && aiEnabled && vars.ReplicateCooldown.CheckAndSetCooldown(CATCH_AI_JUDGE_KEY, CATCH_AI_JUDGE_COOLDOWN) {
-		const (
-			SYSTEM_PROMPT         = "群中正在进行一场捕捉游戏，你作为一位旁观者给出简短的评价，用中文回复。"
-			MAX_COMPLETION_TOKENS = 256
-			TEMPERATURE           = 1.1
-		)
-		prompt := fmt.Sprintf("玩家'%s'在本次游戏中捕捉%d次,捕到%d只,成功率%.2f%%,战利品如下:\n", tg.GetTgUserName(msg.From), catchNum, successCtr, succRate)
-		for obj, num := range catchCount {
-			prompt += fmt.Sprintf("%s: %d只\n", obj.Name, num)
+		data := promptData{
+			UserName: tg.GetTgUserName(msg.From),
+			CatchNum: catchNum,
+			SuccNum:  successCtr,
+			SuccRate: succRate,
 		}
-		gptResp, err := utils.CallGPT41Nano(SYSTEM_PROMPT, prompt, TEMPERATURE, MAX_COMPLETION_TOKENS, 10*time.Second)
+		for _, item := range catchObjList {
+			data.Loot = append(data.Loot, promptLootItem{
+				Name: item.Name,
+				Num:  catchCount[item],
+			})
+		}
+		gptResp, err := generateAIJudgement(data)
 		if err != nil {
 			logrus.Errorf("catch game replicate request failed: %v", err)
 		} else {
@@ -180,4 +185,38 @@ func CatchHandler(msg *models.Message) (err error) {
 	msgParams.ParseMode = models.ParseModeHTML
 	_, err = vars.BotInstance.SendMessage(context.Background(), &msgParams)
 	return err
+}
+
+func generateAIJudgement(input promptData) (string, error) {
+	// 从配置中获取温度
+	var err error
+	val, err := config.Get(config.GLOBAL_CONFIG_CHAT_ID, config.CATCH_GAME_AI_TEMPERATURE)
+	if err != nil {
+		return "", err
+	}
+	aiTemp, err := strconv.ParseFloat(val, 64)
+	if err != nil {
+		return "", err
+	}
+	// 从配置中获取最大token
+	val, err = config.Get(config.GLOBAL_CONFIG_CHAT_ID, config.CATCH_GAME_MAX_TOKEN)
+	if err != nil {
+		return "", err
+	}
+	maxToken, err := strconv.Atoi(val)
+	if err != nil {
+		return "", err
+	}
+	// 从配置中获取prompt
+	systemPrompt, err := config.Get(config.GLOBAL_CONFIG_CHAT_ID, config.CATCH_GAME_PROMPT)
+	if err != nil {
+		return "", err
+	}
+	// 生成结构数据
+	jsonStr, err := json.Marshal(input)
+	if err != nil {
+		return "", err
+	}
+
+	return utils.CallGPT41Nano(systemPrompt, string(jsonStr), aiTemp, maxToken, CATCH_AI_CALL_TIMEOUT)
 }

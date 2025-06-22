@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"math/rand/v2"
 )
 
@@ -22,4 +23,12 @@ func PickOne[T any](input []T) T {
 		return input[0]
 	}
 	return input[rand.IntN(len(input))]
+}
+
+func MarshalToJsonNoError(v any) string {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err.Error()
+	}
+	return string(b)
 }

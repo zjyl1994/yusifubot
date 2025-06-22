@@ -81,6 +81,19 @@ func Start() (err error) {
 	if err != nil {
 		return err
 	}
+	// 初始化全局配置
+	defaultConfigs := map[string]string{
+		config.CATCH_GAME_AI_TEMPERATURE: "1.1",
+		config.CATCH_GAME_MAX_TOKEN:      "256",
+		config.CATCH_GAME_PROMPT:         "群中正在进行一场捕捉游戏，你作为一位旁观者给出简短的评价，用中文回复。",
+	}
+	for k, v := range defaultConfigs {
+		err = config.SetIfNotExist(0, k, v)
+		if err != nil {
+			return err
+		}
+	}
+
 	// 初始化AdminApi
 	adminApi := fiber.New(fiber.Config{
 		DisableStartupMessage: true,
