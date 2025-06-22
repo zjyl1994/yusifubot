@@ -21,6 +21,7 @@ var (
 	DBInstance   *gorm.DB
 
 	AdminUserId int64
+	AdminToken  string
 
 	RNG *rand.ChaCha8
 )

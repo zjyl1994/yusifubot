@@ -9,15 +9,18 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	tgbot "github.com/go-telegram/bot"
+	"github.com/gofiber/fiber/v2"
 	_ "github.com/joho/godotenv/autoload"
 	gorm_logrus "github.com/onrik/gorm-logrus"
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
 	"github.com/zjyl1994/yusifubot/server/bot"
+	"github.com/zjyl1994/yusifubot/server/http"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
@@ -45,6 +48,7 @@ func Start() (err error) {
 	if err != nil {
 		return err
 	}
+	vars.AdminToken = os.Getenv("YUSIFUBOT_ADMIN_TOKEN")
 	vars.ReplicateToken = os.Getenv("YUSIFUBOT_REPLICATE_TOKEN")
 	vars.ReplicateCooldown = utils.NewCooldownManager()
 
@@ -77,6 +81,9 @@ func Start() (err error) {
 	if err != nil {
 		return err
 	}
+	// 初始化AdminApi
+	adminApi := fiber.New()
+	http.AdminApi(adminApi)
 	// 启动bot实例
 	botOpts := []tgbot.Option{
 		tgbot.WithDefaultHandler(bot.Handler),
@@ -89,12 +96,21 @@ func Start() (err error) {
 	defer cancel()
 	// 启动 bot
 	go vars.BotInstance.Start(ctx)
+	// 启动 admin api
+	go func() {
+		if err = adminApi.Listen(vars.ListenAddr); err != nil {
+			logrus.Errorln("Admin API failed:", err)
+		}
+	}()
 	// 响应 ctrl+c
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 	<-signalChan
 	logrus.Infoln("Received interrupt, shutting down...")
 
+	if err = adminApi.ShutdownWithTimeout(3 * time.Second); err != nil {
+		return err
+	}
 	if err = sqlDB.Close(); err != nil {
 		return err
 	}
