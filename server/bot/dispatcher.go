@@ -45,6 +45,8 @@ func commandDispatcher(msg *models.Message) error {
 	switch strings.ToLower(command) {
 	case "start":
 		return utils.ReplyTextToTelegram(msg, "欢迎使用 YusifuBot", false)
+	case "debuginfo":
+		return tg.InfoHandler(msg)
 	case "config":
 		return config.Handler(msg)
 	case "catch", "catchall", "catch5", "catch10":

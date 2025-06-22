@@ -82,7 +82,9 @@ func Start() (err error) {
 		return err
 	}
 	// 初始化AdminApi
-	adminApi := fiber.New()
+	adminApi := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+	})
 	http.AdminApi(adminApi)
 	// 启动bot实例
 	botOpts := []tgbot.Option{
@@ -98,6 +100,7 @@ func Start() (err error) {
 	go vars.BotInstance.Start(ctx)
 	// 启动 admin api
 	go func() {
+		logrus.Infoln("Admin API listening on", vars.ListenAddr)
 		if err = adminApi.Listen(vars.ListenAddr); err != nil {
 			logrus.Errorln("Admin API failed:", err)
 		}

@@ -124,11 +124,11 @@ func CatchHandler(msg *models.Message) (err error) {
 	var aiJudgment string
 	if successCtr > 0 && aiEnabled && vars.ReplicateCooldown.CheckAndSetCooldown(CATCH_AI_JUDGE_KEY, CATCH_AI_JUDGE_COOLDOWN) {
 		const (
-			SYSTEM_PROMPT         = "群中正在进行一场捕捉游戏，你作为一位旁观者对捕捉结果进行简单评论。评价结果请用中文回复。"
+			SYSTEM_PROMPT         = "群中正在进行一场捕捉游戏，你作为一位旁观者给出简短的评价，用中文回复。"
 			MAX_COMPLETION_TOKENS = 256
 			TEMPERATURE           = 1.1
 		)
-		prompt := fmt.Sprintf("玩家'%s'在本轮捕捉中成功率%.2f,战利品如下:\n", tg.GetTgUserName(msg.From), succRate)
+		prompt := fmt.Sprintf("玩家'%s'在本次游戏中捕捉%d次,捕到%d只,成功率%.2f%%,战利品如下:\n", tg.GetTgUserName(msg.From), catchNum, successCtr, succRate)
 		for obj, num := range catchCount {
 			prompt += fmt.Sprintf("%s: %d只\n", obj.Name, num)
 		}
@@ -151,6 +151,7 @@ func CatchHandler(msg *models.Message) (err error) {
 		sb.WriteString("<blockquote expandable>")
 		if aiEnabled && len(aiJudgment) > 0 {
 			sb.WriteString(aiJudgment)
+			sb.WriteRune('\n')
 		} else {
 			succRate := float64(successCtr) / float64(catchNum)
 			sb.WriteString(fmt.Sprintf("成功率： %.2f%%\n", succRate*100))
