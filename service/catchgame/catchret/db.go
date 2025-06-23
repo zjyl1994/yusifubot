@@ -63,7 +63,7 @@ func RankCatch(db *gorm.DB, chatId, objId int64) ([]CatchRankItem, error) {
 	if objId != 0 {
 		query = query.Where("obj_id =?", objId)
 	}
-	
+
 	err := query.
 		Group("user_id").
 		Order("num DESC").

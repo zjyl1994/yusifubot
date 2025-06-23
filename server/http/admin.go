@@ -1,6 +1,7 @@
 package http
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,6 +17,7 @@ func AdminApi(app *fiber.App) {
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("YUSIFUBOT")
 	})
+	app.Get("/catchdata", getCatchData)
 	adminGroup := app.Group("/admin", auth)
 	adminGroup.Post("/givesp", giveSp)
 	adminGroup.Post("/givecatch", giveCatch)
@@ -125,4 +127,32 @@ func createCatchObj(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
 	}
 	return c.SendString("all success")
+}
+
+func getCatchData(c *fiber.Ctx) error {
+	var chatId, userId int64
+
+	if str := c.Query("chat_id"); len(str) > 0 {
+		if i64, err := strconv.ParseInt(str, 10, 64); err == nil {
+			chatId = i64
+		} else {
+			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+		}
+	} else {
+		return c.Status(fiber.StatusBadRequest).SendString("chat_id is required")
+	}
+	if str := c.Query("user_id"); len(str) > 0 {
+		if i64, err := strconv.ParseInt(str, 10, 64); err == nil {
+			userId = i64
+		} else {
+			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
+		}
+	} else {
+		return c.Status(fiber.StatusBadRequest).SendString("user_id is required")
+	}
+	result, err := catchret.GetMyCatch(vars.DBInstance, common.UserRel{ChatId: chatId, UserId: userId})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+	return c.JSON(result)
 }

@@ -8,7 +8,7 @@ type CatchResult struct {
 	Num    int64
 }
 
-type CatchRankItem struct{
+type CatchRankItem struct {
 	UserId int64
-	Num int64
+	Num    int64
 }
