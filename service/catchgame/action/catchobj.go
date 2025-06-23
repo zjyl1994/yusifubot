@@ -163,6 +163,19 @@ func SetMyEmojiHandler(msg *models.Message) error {
 	return utils.ReplyTextToTelegram(msg, "成功设置emoji为"+arg, false)
 }
 
+// 一键同步捕捉参数
+func CatchMeHereHandler(msg *models.Message) error {
+	// 只在群聊中生效
+	if !utils.IsGroup(msg) {
+		return nil
+	}
+	err := catchobj.SyncLastObj(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID})
+	if err != nil {
+		return err
+	}
+	return utils.ReplyTextToTelegram(msg, "成功同步捕捉参数", false)
+}
+
 // 静默创建可抓账号
 func createCatchObj(msg *models.Message, nickName, emoji string) error {
 	if nickName == "" {

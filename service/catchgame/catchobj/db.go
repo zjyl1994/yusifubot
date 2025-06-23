@@ -3,6 +3,7 @@ package catchobj
 import (
 	"errors"
 
+	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"gorm.io/gorm"
 )
@@ -84,4 +85,31 @@ func UpdateEmoji(db *gorm.DB, user common.UserRel, emoji string) error {
 	}
 	obj.Emoji = emoji
 	return db.Save(&obj).Error
+}
+
+func SyncLastObj(db *gorm.DB, user common.UserRel) error {
+	var obj CatchObj
+	err := db.Where("user_id = ?", user.UserId).Last(&obj).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return utils.NewBizErrWithBase("没有找到任何捕捉配置,请使用setmycatch先创建一个", err)
+		}
+		return err
+	}
+	err = CreateCatchObj(db, user, obj.Name, obj.Emoji)
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			err = UpdateNickName(db, user, obj.Name)
+			if err != nil {
+				return err
+			}
+			err = UpdateEmoji(db, user, obj.Emoji)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+	return nil
 }

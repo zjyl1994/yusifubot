@@ -63,6 +63,8 @@ func commandDispatcher(msg *models.Message) error {
 		return action.SetMyNicknameHandler(msg)
 	case "setmyemoji":
 		return action.SetMyEmojiHandler(msg)
+	case "catchmehere":
+		return action.CatchMeHereHandler(msg)
 	}
 	return nil
 }
