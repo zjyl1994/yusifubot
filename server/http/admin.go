@@ -130,26 +130,15 @@ func createCatchObj(c *fiber.Ctx) error {
 }
 
 func getCatchData(c *fiber.Ctx) error {
-	var chatId, userId int64
+	chatId, err := strconv.ParseInt(c.Query("chat_id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("parse chat_id failed with " + err.Error())
+	}
+	userId, err := strconv.ParseInt(c.Query("user_id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("parse user_id failed with " + err.Error())
+	}
 
-	if str := c.Query("chat_id"); len(str) > 0 {
-		if i64, err := strconv.ParseInt(str, 10, 64); err == nil {
-			chatId = i64
-		} else {
-			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
-		}
-	} else {
-		return c.Status(fiber.StatusBadRequest).SendString("chat_id is required")
-	}
-	if str := c.Query("user_id"); len(str) > 0 {
-		if i64, err := strconv.ParseInt(str, 10, 64); err == nil {
-			userId = i64
-		} else {
-			return c.Status(fiber.StatusBadRequest).SendString(err.Error())
-		}
-	} else {
-		return c.Status(fiber.StatusBadRequest).SendString("user_id is required")
-	}
 	result, err := catchret.GetMyCatch(vars.DBInstance, common.UserRel{ChatId: chatId, UserId: userId})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())

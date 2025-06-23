@@ -2,7 +2,6 @@ package action
 
 import (
 	"strconv"
-	"unicode/utf8"
 
 	"github.com/go-telegram/bot/models"
 	"github.com/zjyl1994/yusifubot/infra/utils"
@@ -11,7 +10,9 @@ import (
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"github.com/zjyl1994/yusifubot/service/tg"
-	"golang.org/x/text/unicode/norm"
+
+	"github.com/rivo/uniseg"
+	emoji "github.com/tmdvs/Go-Emoji-Utils"
 )
 
 // 切换可抓状态
@@ -187,34 +188,7 @@ func createCatchObj(msg *models.Message, nickName, emoji string) error {
 	return catchobj.CreateCatchObj(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, nickName, emoji)
 }
 
-// 判断一个rune是否为emoji
-func isEmoji(r rune) bool {
-	switch {
-	case r >= 0x1F600 && r <= 0x1F64F, // Emoticons
-		r >= 0x1F300 && r <= 0x1F5FF, // Miscellaneous Symbols and Pictographs
-		r >= 0x1F680 && r <= 0x1F6FF, // Transport and Map Symbols
-		r >= 0x2600 && r <= 0x26FF,   // Misc symbols
-		r >= 0x2700 && r <= 0x27BF,   // Dingbats
-		r >= 0xFE00 && r <= 0xFE0F,   // Variation Selectors
-		r >= 0x1F900 && r <= 0x1F9FF, // Supplemental Symbols and Pictographs
-		r >= 0x1F1E6 && r <= 0x1F1FF: // Flags (iOS)
-		return true
-	default:
-		return false
-	}
-}
-
 // 判断字符串是否只有一个emoji
 func isSingleEmoji(s string) bool {
-	normalized := norm.NFC.String(s) // Normalize the string to ensure consistent comparison
-	count := 0
-	for len(normalized) > 0 {
-		r, size := utf8.DecodeRuneInString(normalized)
-		if !isEmoji(r) {
-			return false
-		}
-		count++
-		normalized = normalized[size:]
-	}
-	return count == 1
+	return uniseg.GraphemeClusterCount(s) == 1 && len(emoji.FindAll(s)) == 1
 }

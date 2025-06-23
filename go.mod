@@ -8,10 +8,11 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/joho/godotenv v1.5.1
 	github.com/onrik/gorm-logrus v0.5.0
+	github.com/rivo/uniseg v0.4.7
 	github.com/samber/lo v1.51.0
 	github.com/sirupsen/logrus v1.9.3
+	github.com/tmdvs/Go-Emoji-Utils v1.2.1
 	github.com/vinta/pangu v3.0.0+incompatible
-	golang.org/x/text v0.22.0
 	gorm.io/gorm v1.25.12
 )
 
@@ -27,12 +28,12 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.5.0 // indirect
