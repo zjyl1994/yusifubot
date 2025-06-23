@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/zjyl1994/yusifubot/infra/vars"
+	"github.com/zjyl1994/yusifubot/service/catchgame/catchobj"
 	"github.com/zjyl1994/yusifubot/service/catchgame/catchret"
 	"github.com/zjyl1994/yusifubot/service/catchgame/common"
 	"github.com/zjyl1994/yusifubot/service/catchgame/stamina"
@@ -18,6 +19,7 @@ func AdminApi(app *fiber.App) {
 	adminGroup := app.Group("/admin", auth)
 	adminGroup.Post("/givesp", giveSp)
 	adminGroup.Post("/givecatch", giveCatch)
+	adminGroup.Post("/createobj", createCatchObj)
 }
 
 func auth(c *fiber.Ctx) error {
@@ -86,6 +88,34 @@ func giveCatch(c *fiber.Ctx) error {
 				ChatId: item.ChatId,
 				UserId: item.UserId,
 			}, item.ObjId, item.Num); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).SendString(err.Error())
+	}
+	return c.SendString("all success")
+}
+
+func createCatchObj(c *fiber.Ctx) error {
+	var req []struct {
+		ChatId int64  `json:"chat_id"`
+		UserId int64  `json:"user_id"`
+		Name   string `json:"name"`
+		Emoji  string `json:"emoji"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).SendString("invalid request body:" + err.Error())
+	}
+
+	err := vars.DBInstance.Transaction(func(tx *gorm.DB) error {
+		for _, item := range req {
+			if err := catchobj.CreateCatchObj(tx, common.UserRel{
+				ChatId: item.ChatId,
+				UserId: item.UserId,
+			}, item.Name, item.Emoji); err != nil {
 				return err
 			}
 		}

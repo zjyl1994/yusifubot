@@ -57,6 +57,8 @@ func commandDispatcher(msg *models.Message) error {
 		return action.GetMyCatchHandler(msg)
 	case "rankcatch":
 		return action.RankCatchHandler(msg)
+	case "setmycatch":
+		return action.SetMyCatchHandler(msg)
 	case "setmyname":
 		return action.SetMyNicknameHandler(msg)
 	case "setmyemoji":

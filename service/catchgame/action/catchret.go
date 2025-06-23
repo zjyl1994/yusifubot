@@ -63,7 +63,7 @@ func GetMyCatchHandler(msg *models.Message) error {
 		if !ok {
 			name = strconv.FormatInt(v.ObjId, 10)
 		}
-		sb.WriteString(fmt.Sprintf("%s %d只\n\n", name, v.Num))
+		sb.WriteString(fmt.Sprintf("%s %d只\n\n", utils.EscapeTelegramMarkdown(name), v.Num))
 	}
 	return utils.ReplyTextToTelegram(msg, sb.String(), true)
 }
@@ -103,7 +103,7 @@ func RankCatchHandler(msg *models.Message) error {
 		if err != nil {
 			return err
 		}
-		sb.WriteString(fmt.Sprintf("%d. %s %d只\n\n", idx+1, name, v.Num))
+		sb.WriteString(fmt.Sprintf("%d\\. %s %d只\n\n", idx+1, utils.EscapeTelegramMarkdown(name), v.Num))
 	}
 	return utils.ReplyTextToTelegram(msg, sb.String(), true)
 }

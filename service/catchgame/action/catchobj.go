@@ -58,6 +58,64 @@ func CatchMeHandler(msg *models.Message) error {
 	return utils.ReplyTextToTelegram(msg, reply, false)
 }
 
+func SetMyCatchHandler(msg *models.Message) error {
+	// 只在群聊中生效
+	if !utils.IsGroup(msg) {
+		return nil
+	}
+	args := utils.ParseCommandArguments(msg.Text)
+	switch len(args) {
+	case 0:
+		return utils.ReplyTextToTelegram(msg, "请在命令后追加要设置的新昵称和emoji", false)
+	case 1:
+		if isSingleEmoji(args[0]) {
+			err := catchobj.UpdateEmoji(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, args[0])
+			if err == catchobj.ErrCatchObjNotFound {
+				err = createCatchObj(msg, tg.GetTgUserName(msg.From), args[0])
+			}
+			if err != nil {
+				return err
+			}
+			return utils.ReplyTextToTelegram(msg, "成功设置emoji", false)
+		} else {
+			err := catchobj.UpdateNickName(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, args[0])
+			if err == catchobj.ErrCatchObjNotFound {
+				err = createCatchObj(msg, args[0], CATCH_DEFAULT_EMOJI)
+			}
+			if err != nil {
+				return err
+			}
+			return utils.ReplyTextToTelegram(msg, "成功设置昵称", false)
+		}
+	default:
+		catchName := args[0]
+		catchEmoji := args[1]
+		if !isSingleEmoji(catchEmoji) {
+			return utils.ReplyTextToTelegram(msg, "只能用一个emoji哦", false)
+		}
+		cobj, err := catchobj.GetCatchObj(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID})
+		if err != nil {
+			return err
+		}
+		if cobj == nil {
+			err = createCatchObj(msg, catchName, catchEmoji)
+			if err != nil {
+				return err
+			}
+			return utils.ReplyTextToTelegram(msg, "成功设置昵称和emoji", false)
+		}
+		err = catchobj.UpdateNickName(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, catchName)
+		if err != nil {
+			return err
+		}
+		err = catchobj.UpdateEmoji(vars.DBInstance, common.UserRel{ChatId: msg.Chat.ID, UserId: msg.From.ID}, catchEmoji)
+		if err != nil {
+			return err
+		}
+		return utils.ReplyTextToTelegram(msg, "成功设置昵称和emoji", false)
+	}
+}
+
 // 设置昵称
 func SetMyNicknameHandler(msg *models.Message) error {
 	// 只在群聊中生效
