@@ -10,6 +10,7 @@ import (
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/service/catchgame/action"
 	"github.com/zjyl1994/yusifubot/service/config"
+	"github.com/zjyl1994/yusifubot/service/draw"
 	"github.com/zjyl1994/yusifubot/service/tg"
 )
 
@@ -65,6 +66,8 @@ func commandDispatcher(msg *models.Message) error {
 		return action.SetMyEmojiHandler(msg)
 	case "catchmehere":
 		return action.CatchMeHereHandler(msg)
+	case "draw":
+		return draw.DrawImageHandler(msg)
 	}
 	return nil
 }
