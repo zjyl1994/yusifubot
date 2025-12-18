@@ -8,7 +8,7 @@ import (
 	"github.com/zjyl1994/yusifubot/infra/vars"
 )
 
-var allowChatIds map[int64]struct{}
+var allowChatIds = make(map[int64]struct{})
 var allowChatMutex sync.Mutex
 
 func SwitchHandler(msg *models.Message) error {
