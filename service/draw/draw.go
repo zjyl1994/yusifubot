@@ -2,7 +2,10 @@ package draw
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -21,10 +24,19 @@ func DrawImageHandler(msg *models.Message) error {
 		return utils.ReplyTextToTelegram(msg, "该聊天未开启绘图能力", false)
 	}
 	commandArgs := utils.ParseCommandArguments(msg.Text)
-	prompt := strings.Join(commandArgs, " ")
+	prompt := strings.TrimSpace(strings.Join(commandArgs, " "))
 	if prompt == "" {
 		return utils.ReplyTextToTelegram(msg, "请输入提示词", false)
 	}
+
+	if msg.From.ID != vars.AdminUserId {
+		key := "draw:" + strconv.FormatInt(msg.From.ID, 10)
+		if !vars.ReplicateCooldown.CheckAndSetCooldown(key, 1*time.Minute) {
+			remaining := vars.ReplicateCooldown.RemainingTime(key)
+			return utils.ReplyTextToTelegram(msg, fmt.Sprintf("你的绘图能力冷却中，请等待 %d 秒", int(remaining.Seconds())), false)
+		}
+	}
+
 	go func(ctx context.Context, m *models.Message) {
 		url, err := drawWithReplicate(ctx, prompt)
 		if err != nil {

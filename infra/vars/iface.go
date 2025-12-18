@@ -6,5 +6,6 @@ import (
 
 type CooldownManager interface {
 	CheckAndSetCooldown(key string, duration time.Duration) bool
+	RemainingTime(key string) time.Duration
 	CleanupExpired()
 }
