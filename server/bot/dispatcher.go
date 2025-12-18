@@ -68,6 +68,8 @@ func commandDispatcher(msg *models.Message) error {
 		return action.CatchMeHereHandler(msg)
 	case "draw":
 		return draw.DrawImageHandler(msg)
+	case "drawswitch":
+		return draw.SwitchHandler(msg)
 	}
 	return nil
 }

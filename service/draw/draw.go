@@ -17,8 +17,8 @@ const (
 )
 
 func DrawImageHandler(msg *models.Message) error {
-	if msg.From.ID != vars.AdminUserId {
-		return utils.ReplyTextToTelegram(msg, "您不是管理员", false)
+	if msg.From.ID != vars.AdminUserId && !checkChatIdAllowed(msg.Chat.ID) {
+		return utils.ReplyTextToTelegram(msg, "该聊天未开启绘图能力", false)
 	}
 	commandArgs := utils.ParseCommandArguments(msg.Text)
 	prompt := strings.Join(commandArgs, " ")
