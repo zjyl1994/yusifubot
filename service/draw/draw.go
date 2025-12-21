@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -93,8 +92,9 @@ func preparePrompt(ctx context.Context, prompt string) (string, error) {
 	if prompt == "" {
 		return "", utils.NewBizErr("prompt is empty")
 	}
-	if utf8.RuneCountInString(prompt) > 50 { // 本身就很长的prompt不做拓展
-		return prompt, nil
+	// 标记为raw的prompt，直接返回不做处理
+	if cut, found := strings.CutPrefix(prompt, "raw:"); found {
+		return cut, nil
 	}
 	// 使用gpt-5-nano进行拓展
 	r8, err := replicate.NewClient(replicate.WithToken(vars.ReplicateToken))
@@ -102,7 +102,7 @@ func preparePrompt(ctx context.Context, prompt string) (string, error) {
 		return "", utils.NewBizErr("create replicate client failed")
 	}
 	output, err := r8.Run(ctx, PROMPT_MODEL_IDENTIFIER, replicate.PredictionInput{
-		"system_prompt":         "你是一个画师，解读输入的文字，转化为尽可能明确的绘图指令并输出，无需输出更多其他内容。",
+		"system_prompt":         "你是一个专业摄影师，解读输入的文字，转化为包含镜头、主题、环境、灯光、风格、摄影参数的明确绘图指令并输出，无需输出更多其他内容。",
 		"prompt":                prompt,
 		"max_completion_tokens": 1024,
 	}, nil)
