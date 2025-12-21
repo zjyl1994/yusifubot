@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	MODEL_IDENTIFIER = "prunaai/z-image-turbo:7ea16386290ff5977c7812e66e462d7ec3954d8e007a8cd18ded3e7d41f5d7cf"
+	IMAGE_MODEL_IDENTIFIER  = "prunaai/z-image-turbo"
+	PROMPT_MODEL_IDENTIFIER = "openai/gpt-5-nano"
 )
 
 func DrawImageHandler(msg *models.Message) error {
@@ -38,7 +39,12 @@ func DrawImageHandler(msg *models.Message) error {
 	}
 
 	go func(ctx context.Context, m *models.Message) {
-		url, err := drawWithReplicate(ctx, prompt)
+		preparedPrompt, err := preparePrompt(context.Background(), prompt)
+		if err != nil {
+			utils.ReplyTextToTelegram(msg, err.Error(), false)
+			return
+		}
+		url, err := drawWithReplicate(ctx, preparedPrompt)
 		if err != nil {
 			utils.ReplyTextToTelegram(msg, err.Error(), false)
 			return
@@ -67,7 +73,7 @@ func drawWithReplicate(ctx context.Context, prompt string) (string, error) {
 	if err != nil {
 		return "", utils.NewBizErr("create replicate client failed")
 	}
-	output, err := r8.Run(ctx, MODEL_IDENTIFIER, replicate.PredictionInput{
+	output, err := r8.Run(ctx, IMAGE_MODEL_IDENTIFIER, replicate.PredictionInput{
 		"prompt": prompt,
 	}, nil)
 	if err != nil {
@@ -79,4 +85,44 @@ func drawWithReplicate(ctx context.Context, prompt string) (string, error) {
 		return "", utils.NewBizErr("output is not a string")
 	}
 	return outputURL, nil
+}
+
+func preparePrompt(ctx context.Context, prompt string) (string, error) {
+	prompt = strings.TrimSpace(prompt)
+	if prompt == "" {
+		return "", utils.NewBizErr("prompt is empty")
+	}
+	if len(prompt) > 30 { // 本身就很长的prompt不做拓展
+		return prompt, nil
+	}
+	// 使用gpt-5-nano进行拓展
+	r8, err := replicate.NewClient(replicate.WithToken(vars.ReplicateToken))
+	if err != nil {
+		return "", utils.NewBizErr("create replicate client failed")
+	}
+	output, err := r8.Run(ctx, PROMPT_MODEL_IDENTIFIER, replicate.PredictionInput{
+		"system_prompt":         "你是一个画师，解读输入的文字，转化为尽可能明确的绘图指令并输出，无需输出更多其他内容。",
+		"prompt":                prompt,
+		"max_completion_tokens": 1024,
+	}, nil)
+	if err != nil {
+		return "", utils.NewBizErr("run replicate model failed")
+	}
+	logrus.Debugf("replicate output: %s", utils.MarshalToJsonNoError(output))
+
+	var outputText string
+	if str, ok := output.(string); ok {
+		outputText = str
+	} else if tokens, ok := output.([]interface{}); ok {
+		sb := strings.Builder{}
+		for _, token := range tokens {
+			if s, ok := token.(string); ok {
+				sb.WriteString(s)
+			}
+		}
+		outputText = sb.String()
+	} else {
+		return "", utils.NewBizErr("output format error")
+	}
+	return outputText, nil
 }
