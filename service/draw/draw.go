@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -92,7 +93,7 @@ func preparePrompt(ctx context.Context, prompt string) (string, error) {
 	if prompt == "" {
 		return "", utils.NewBizErr("prompt is empty")
 	}
-	if len(prompt) > 30 { // 本身就很长的prompt不做拓展
+	if utf8.RuneCountInString(prompt) > 50 { // 本身就很长的prompt不做拓展
 		return prompt, nil
 	}
 	// 使用gpt-5-nano进行拓展

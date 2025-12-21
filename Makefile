@@ -2,7 +2,7 @@ TARGET=yusifubot
 
 UPX := $(shell command -v upx 2>/dev/null)
 
-all: build compress
+all: clean build compress
 
 build:
 	go build -ldflags "-s -w" -o $(TARGET) .
