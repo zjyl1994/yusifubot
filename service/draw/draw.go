@@ -1,15 +1,19 @@
 package draw
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
-	"github.com/replicate/replicate-go"
 	"github.com/sirupsen/logrus"
 	"github.com/zjyl1994/yusifubot/infra/utils"
 	"github.com/zjyl1994/yusifubot/infra/vars"
@@ -18,7 +22,24 @@ import (
 const (
 	IMAGE_MODEL_IDENTIFIER  = "prunaai/z-image-turbo"
 	PROMPT_MODEL_IDENTIFIER = "openai/gpt-5-nano"
+	replicateAPIBaseURL     = "https://api.replicate.com/v1/models/"
 )
+
+type replicatePredictionRequest struct {
+	Input map[string]interface{} `json:"input"`
+}
+
+type replicatePredictionResponse struct {
+	Output interface{} `json:"output"`
+	Error  interface{} `json:"error"`
+	Status string      `json:"status"`
+}
+
+type replicateProblemResponse struct {
+	Detail interface{} `json:"detail"`
+	Status int         `json:"status"`
+	Title  string      `json:"title"`
+}
 
 func DrawImageHandler(msg *models.Message) error {
 	if msg.From.ID != vars.AdminUserId && !checkChatIdAllowed(msg.Chat.ID) {
@@ -69,22 +90,43 @@ func DrawImageHandler(msg *models.Message) error {
 }
 
 func drawWithReplicate(ctx context.Context, prompt string) (string, error) {
-	r8, err := replicate.NewClient(replicate.WithToken(vars.ReplicateToken))
-	if err != nil {
-		return "", utils.NewBizErr("create replicate client failed")
-	}
-	output, err := r8.Run(ctx, IMAGE_MODEL_IDENTIFIER, replicate.PredictionInput{
+	output, err := runReplicateModel(ctx, IMAGE_MODEL_IDENTIFIER, map[string]interface{}{
 		"prompt": prompt,
-	}, nil)
+	})
 	if err != nil {
+		logrus.WithError(err).Errorln("run image replicate model failed")
 		return "", utils.NewBizErr("run replicate model failed")
 	}
 	logrus.Debugf("replicate output: %s", utils.MarshalToJsonNoError(output))
-	outputURL, ok := output.(string)
-	if !ok {
-		return "", utils.NewBizErr("output is not a string")
+	outputURL, err := extractImageURL(output)
+	if err != nil {
+		return "", err
 	}
 	return outputURL, nil
+}
+
+func extractImageURL(output interface{}) (string, error) {
+	if outputURL, ok := output.(string); ok {
+		outputURL = strings.TrimSpace(outputURL)
+		if outputURL == "" {
+			return "", utils.NewBizErr("image output is empty")
+		}
+		return outputURL, nil
+	}
+
+	if outputs, ok := output.([]interface{}); ok {
+		for _, item := range outputs {
+			if outputURL, ok := item.(string); ok {
+				outputURL = strings.TrimSpace(outputURL)
+				if outputURL != "" {
+					return outputURL, nil
+				}
+			}
+		}
+		return "", utils.NewBizErr("image output is empty")
+	}
+
+	return "", utils.NewBizErr(fmt.Sprintf("unsupported image output type: %s", reflect.TypeOf(output)))
 }
 
 func preparePrompt(ctx context.Context, prompt string) (string, error) {
@@ -97,16 +139,13 @@ func preparePrompt(ctx context.Context, prompt string) (string, error) {
 		return cut, nil
 	}
 	// 使用gpt-5-nano进行拓展
-	r8, err := replicate.NewClient(replicate.WithToken(vars.ReplicateToken))
-	if err != nil {
-		return "", utils.NewBizErr("create replicate client failed")
-	}
-	output, err := r8.Run(ctx, PROMPT_MODEL_IDENTIFIER, replicate.PredictionInput{
+	output, err := runReplicateModel(ctx, PROMPT_MODEL_IDENTIFIER, map[string]interface{}{
 		"system_prompt":         "你是一个专业摄影师，解读输入的文字，转化为包含镜头、主题、环境、灯光、风格、摄影参数的明确绘图指令并输出，无需输出更多其他内容。",
 		"prompt":                prompt,
 		"max_completion_tokens": 1024,
-	}, nil)
+	})
 	if err != nil {
+		logrus.WithError(err).Errorln("run prompt replicate model failed")
 		return "", utils.NewBizErr("run replicate model failed")
 	}
 	logrus.Debugf("replicate output: %s", utils.MarshalToJsonNoError(output))
@@ -126,4 +165,89 @@ func preparePrompt(ctx context.Context, prompt string) (string, error) {
 		return "", utils.NewBizErr("output format error")
 	}
 	return outputText, nil
+}
+
+func runReplicateModel(ctx context.Context, identifier string, input map[string]interface{}) (interface{}, error) {
+	requestBody, err := json.Marshal(replicatePredictionRequest{Input: input})
+	if err != nil {
+		return nil, fmt.Errorf("marshal replicate request failed: %w", err)
+	}
+
+	for attempt := 0; attempt < 2; attempt++ {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, replicateAPIBaseURL+identifier+"/predictions", bytes.NewReader(requestBody))
+		if err != nil {
+			return nil, fmt.Errorf("create replicate request failed: %w", err)
+		}
+		req.Header.Set("Authorization", "Bearer "+vars.ReplicateToken)
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Prefer", "wait")
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("execute replicate request failed: %w", err)
+		}
+
+		respBody, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if readErr != nil {
+			return nil, fmt.Errorf("read replicate response failed: %w", readErr)
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests && attempt == 0 {
+			waitDuration := parseReplicateRetryAfter(resp.Header)
+			if waitDuration > 0 {
+				select {
+				case <-time.After(waitDuration):
+					continue
+				case <-ctx.Done():
+					return nil, ctx.Err()
+				}
+			}
+		}
+
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+			return nil, formatReplicateAPIError(resp.StatusCode, respBody)
+		}
+
+		var predictionResp replicatePredictionResponse
+		if err := json.Unmarshal(respBody, &predictionResp); err != nil {
+			return nil, fmt.Errorf("unmarshal replicate response failed: %w", err)
+		}
+		if predictionResp.Error != nil {
+			return nil, fmt.Errorf("replicate model error: %v", predictionResp.Error)
+		}
+		if predictionResp.Status != "" && predictionResp.Status != "succeeded" {
+			return nil, fmt.Errorf("replicate prediction status: %s", predictionResp.Status)
+		}
+		return predictionResp.Output, nil
+	}
+
+	return nil, fmt.Errorf("replicate request exhausted retries")
+}
+
+func formatReplicateAPIError(statusCode int, respBody []byte) error {
+	var problem replicateProblemResponse
+	if err := json.Unmarshal(respBody, &problem); err == nil {
+		if detail := strings.TrimSpace(fmt.Sprint(problem.Detail)); detail != "" && detail != "<nil>" {
+			return fmt.Errorf("replicate api status %d: %s", statusCode, detail)
+		}
+		if title := strings.TrimSpace(problem.Title); title != "" {
+			return fmt.Errorf("replicate api status %d: %s", statusCode, title)
+		}
+	}
+	return fmt.Errorf("replicate api status %d: %s", statusCode, strings.TrimSpace(string(respBody)))
+}
+
+func parseReplicateRetryAfter(header http.Header) time.Duration {
+	for _, key := range []string{"Retry-After", "ratelimit-reset"} {
+		value := strings.TrimSpace(header.Get(key))
+		if value == "" {
+			continue
+		}
+		seconds, err := strconv.Atoi(value)
+		if err == nil && seconds > 0 {
+			return time.Duration(seconds) * time.Second
+		}
+	}
+	return 10 * time.Second
 }

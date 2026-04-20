@@ -26,3 +26,4 @@ go.work.sum
 
 # runtime file
 yusifubot*
+.sdup.toml
